@@ -117,9 +117,9 @@ func readSNP (config *Config) {
 
 	go func() {
 		var record []string
-		var altAlleles []byte
+		var altAlleles []string
 
-		altCache := make(map[string]map[string][]byte)
+		altCache := make(map[string]map[string][]string)
 
 		for {
 			row, err := reader.ReadString(endOfLineByte) // 0x0A separator = newline
@@ -201,7 +201,7 @@ func findEndOfLineChar (r *bufio.Reader, s string) (byte, int, string, error) {
 }
 
 // Without this (calling each separately) real real	1m0.753s, with:	1m0.478s
-func processLine(record []string, header []string, altAlleles []byte, emptyField string,
+func processLine(record []string, header []string, altAlleles []string, emptyField string,
 	fieldDelimiter string, minGq float64, results chan<- string, wg *sync.WaitGroup) {
 
 	defer wg.Done()
@@ -230,7 +230,7 @@ func processLine(record []string, header []string, altAlleles []byte, emptyField
 		output.WriteString("\t")
 		output.WriteString(record[refIdx])
 		output.WriteString("\t")
-		output.WriteByte(alt)
+		output.WriteString(alt)
 		output.WriteString("\t")
 
 		if len(hets[i]) == 0 {
@@ -265,7 +265,7 @@ func validType(cType string) bool {
   return cType == "SNP" || cType == "INS" || cType == "DEL" || cType == "MULTIALLELIC" || cType == "DENOVO_SNP" || cType == "DENOVO_INS" || cType == "DENOVO_DEL" || cType == "DENOVO_MULTIALLELIC"
 }
 
-func gatherAlt(ref string, alleles string, alt map[string]map[string][]byte) []byte {
+func gatherAlt(ref string, alleles string, alt map[string]map[string][]string) []string {
 	if len(alt[ref][alleles]) > 0 {
 		return alt[ref][alleles]
 	}
@@ -273,7 +273,7 @@ func gatherAlt(ref string, alleles string, alt map[string]map[string][]byte) []b
   _, ok := alt[ref];
 
   if !ok {
-    alt[ref] = make(map[string][]byte)
+    alt[ref] = make(map[string][]string)
   }
 
   _, ok = alt[ref][alleles]
@@ -284,7 +284,7 @@ func gatherAlt(ref string, alleles string, alt map[string]map[string][]byte) []b
 
   if !strings.Contains(alleles, ",") {
     // 
-    alt[ref][alleles] = []byte{alleles[0]}
+    alt[ref][alleles] = []string{alleles}
 
     return alt[ref][alleles]
   }
@@ -294,13 +294,13 @@ func gatherAlt(ref string, alleles string, alt map[string]map[string][]byte) []b
       continue
     }
 
-    alt[ref][alleles] = append(alt[ref][alleles], val[0])
+    alt[ref][alleles] = append(alt[ref][alleles], val)
   }
 
   return alt[ref][alleles]
 }
 
-func makeHetHomozygotes(fields []string, header []string, altAlleles []byte, minGQ float64) ([][]string, [][]string, [][]string) {
+func makeHetHomozygotes(fields []string, header []string, altAlleles []string, minGQ float64) ([][]string, [][]string, [][]string) {
 	missing := make([][]string, len(altAlleles), len(altAlleles))
 	het := make([][]string, len(altAlleles), len(altAlleles))
 	hom := make([][]string, len(altAlleles), len(altAlleles))
@@ -332,10 +332,9 @@ func makeHetHomozygotes(fields []string, header []string, altAlleles []byte, min
 		//avoid calculating hash; may be faster for small sets
 		//small hash linear search golang
 		//GC somewhat depleted in human http://blog.kokocinski.net/index.php/gc-content-of-human-chromosomes?blog=2
-		if fields[i][0] == 'A' || fields[i][0] == 'T' || fields[i][0] == 'C' ||
-		fields[i][0] == 'G' || fields[i][0] == 'D' || fields[i][0] == 'I' {
+		if fields[i] == "A" || fields[i] == "T" || fields[i] == "C" || fields[i] == "G" || fields[i] == "D" || fields[i] == "I" {
 			for altIndex, oAlt  := range altAlleles {
-				if fields[i][0] == oAlt || (oAlt == '-' && fields[i][0] == 'D') || (oAlt == '+' && fields[i][0] == 'I') {
+				if fields[i] == oAlt || (oAlt[0] == '-' && fields[i] == "D") || (oAlt[0] == '+' && fields[i] == "I") {
 					hom[altIndex] = append(hom[altIndex], header[i])
 					continue SAMPLES
 				}
@@ -366,7 +365,8 @@ func makeHetHomozygotes(fields []string, header []string, altAlleles []byte, min
 			// It could be that (in low-enough quality sites) the code doesn't actually correspond
 			// to the present alleles
 			for altIndex, oAlt  := range altAlleles {
-				if tAlt == oAlt {
+				// Check only first character, so that we can match D,E,H,I to any indel
+				if tAlt == oAlt[0] {
 					het[altIndex] = append(het[altIndex], header[i])
 					continue IUPAC
 				}

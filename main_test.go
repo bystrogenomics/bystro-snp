@@ -61,25 +61,25 @@ func TestValidType(t *testing.T) {
 }
 
 func TestGatherAlt(t *testing.T) {
-  altCache := make(map[string]map[string][]byte)
+  altCache := make(map[string]map[string][]string)
 
   alleles := gatherAlt("A", "T", altCache)
 
-  if alleles[0] != 'T' {
+  if alleles[0] != "T" {
   	t.Error("Expected only alt to be T", alleles)
   }
 
-  if altCache["A"]["T"][0] != 'T' {
+  if altCache["A"]["T"][0] != "T" {
   	t.Error("Expected altCache to contain T alleles for ref:A alleles:T", alleles)
   }
 
   alleles = gatherAlt("A", "A,T", altCache)
 
-  if alleles[0] != 'T' {
+  if alleles[0] != "T" {
   	t.Error("Expected only alt to be T", alleles)
   }
 
-  if altCache["A"]["A,T"][0] != 'T' {
+  if altCache["A"]["A,T"][0] != "T" {
   	t.Error("Expected altCache to contain T alleles for ref:A alleles:A,T", alleles)
   }
 
@@ -91,71 +91,71 @@ func TestGatherAlt(t *testing.T) {
 
   alleles = gatherAlt("A", "A,T,C", altCache)
 
-  if alleles[0] != 'T' || alleles[1] != 'C' {
+  if alleles[0] != "T" || alleles[1] != "C" {
   	t.Error("Expected multiallelic alts to be T first then C", alleles)
   }
 
-  if altCache["A"]["A,T,C"][0] != 'T' || altCache["A"]["A,T,C"][1] != 'C' {
+  if altCache["A"]["A,T,C"][0] != "T" || altCache["A"]["A,T,C"][1] != "C" {
   	t.Error("Expected altCache to contain T and C alleles for ref:A alleles:A,T,C", alleles)
   }
 
   alleles = gatherAlt("A", "A,-9", altCache)
 
-  if alleles[0] != '-' {
+  if alleles[0] != "-9" {
   	t.Error("Expected alt to be - ", alleles)
   }
 
-  if altCache["A"]["A,-9"][0] != '-' {
+  if altCache["A"]["A,-9"][0] != "-9" {
   	t.Error("Expected altCache to contain - allele for ref:A alleles:A,-9", alleles)
   }
 
   alleles = gatherAlt("A", "A,+AAT", altCache)
 
-  if alleles[0] != '+' {
+  if alleles[0] != "+AAT" {
   	t.Error("Expected alt to be +", alleles)
   }
 
-  if altCache["A"]["A,+AAT"][0] != '+' {
+  if altCache["A"]["A,+AAT"][0] != "+AAT" {
   	t.Error("Expected altCache to contain + allele for ref:A alleles:A,+AAT", alleles)
   }
 
   alleles = gatherAlt("A", "A,+AATAACCCTTGGGG", altCache)
 
-  if alleles[0] != '+' {
+  if alleles[0] != "+AATAACCCTTGGGG" {
   	t.Error("Expected alt to be +", alleles)
   }
 
-  if altCache["A"]["A,+AATAACCCTTGGGG"][0] != '+' {
+  if altCache["A"]["A,+AATAACCCTTGGGG"][0] != "+AATAACCCTTGGGG" {
   	t.Error("Expected altCache to contain + allele for ref:A alleles:A,+AATAACCCTTGGGG", alleles)
   }
 
   alleles = gatherAlt("A", "A,-9,+AATAACCCTTGGGG", altCache)
 
-  if alleles[0] != '-' || alleles[1] != '+' {
+  if alleles[0] != "-9" || alleles[1] != "+AATAACCCTTGGGG" {
   	t.Error("Expected alt to be - and + for ref:A, alleles: A,-9,+AATAACCCTTGGGG", alleles)
   }
 
-  if altCache["A"]["A,-9,+AATAACCCTTGGGG"][0] != '-'  || altCache["A"]["A,-9,+AATAACCCTTGGGG"][1] != '+' {
+  if altCache["A"]["A,-9,+AATAACCCTTGGGG"][0] != "-9"  || altCache["A"]["A,-9,+AATAACCCTTGGGG"][1] != "+AATAACCCTTGGGG" {
   	t.Error("Expected altCache to contain + allele for ref:A alleles:A,-9,+AATAACCCTTGGGG", alleles)
   }
 
   alleles = gatherAlt("T", "A,-9,+AATAACCCTTGGGG", altCache)
 
-  if alleles[0] != 'A' || alleles[1] != '-' || alleles[2] != '+' {
+  if alleles[0] != "A" || alleles[1] != "-9" || alleles[2] != "+AATAACCCTTGGGG" {
   	t.Error("Expected alt to be T, -, and + for ref:T, alleles: A,-9,+AATAACCCTTGGGG", alleles)
   }
 
-  if altCache["T"]["A,-9,+AATAACCCTTGGGG"][0] != 'A' || altCache["T"]["A,-9,+AATAACCCTTGGGG"][1] != '-' || altCache["T"]["A,-9,+AATAACCCTTGGGG"][2] != '+' {
+  if altCache["T"]["A,-9,+AATAACCCTTGGGG"][0] != "A" || altCache["T"]["A,-9,+AATAACCCTTGGGG"][1] != "-9" || altCache["T"]["A,-9,+AATAACCCTTGGGG"][2] != "+AATAACCCTTGGGG" {
   	t.Error("Expected altCache to contain + allele for ref:T alleles:A,-9,+AATAACCCTTGGGG", alleles)
   }
 
   alleles = gatherAlt("G", "A,C", altCache)
 
-  if alleles[0] != 'A' || alleles[1] != 'C' {
+  if alleles[0] != "A" || alleles[1] != "C" {
   	t.Error("Expected alt to be A, C for ref:T, alleles: A,C", alleles)
   }
 
-  if altCache["G"]["A,C"][0] != 'A' || altCache["G"]["A,C"][1] != 'C' {
+  if altCache["G"]["A,C"][0] != "A" || altCache["G"]["A,C"][1] != "C" {
   	t.Error("Expected altCache to contain + allele for ref:T alleles:A,-9,+AATAACCCTTGGGG", alleles)
   }
 }
@@ -164,7 +164,7 @@ func TestProcessBiAllelicLine(t *testing.T) {
 	record := []string{"chr1", "10000", "C", "A,T", "1,100", "SNP", "W", "1", "A", "1", "T", "1"}
 	header := []string{"Fragment", "Position", "Reference", "Alleles", "Allele_counts", "Type", "Sample1", " ", "Sample2", " ", "Sample3", " "}
 
-	altCache := make(map[string]map[string][]byte)
+	altCache := make(map[string]map[string][]string)
 
 	results := make(chan string)
 	wg := new(sync.WaitGroup)
@@ -224,7 +224,7 @@ func TestProcessBiAllelicLineWithGenotypingError(t *testing.T) {
 	record := []string{"chr1", "10000", "C", "A,T", "1,100", "SNP", "K", "1", "A", "1", "T", "1"}
 	header := []string{"Fragment", "Position", "Reference", "Alleles", "Allele_counts", "Type", "Sample1", " ", "Sample2", " ", "Sample3", " "}
 
-	altCache := make(map[string]map[string][]byte)
+	altCache := make(map[string]map[string][]string)
 
 	results := make(chan string)
 	wg := new(sync.WaitGroup)
@@ -284,7 +284,7 @@ func TestProcessBiAllelicLineWithLowCoverageError(t *testing.T) {
 	record := []string{"chr1", "10000", "C", "A,T", "1,100", "SNP", "K", "1", "A", "1", "T", ".9"}
 	header := []string{"Fragment", "Position", "Reference", "Alleles", "Allele_counts", "Type", "SampleA", " ", "Sample2", " ", "SampleB", " "}
 
-	altCache := make(map[string]map[string][]byte)
+	altCache := make(map[string]map[string][]string)
 
 	results := make(chan string)
 	wg := new(sync.WaitGroup)
@@ -339,7 +339,7 @@ func TestProcessMultiallelicLine(t *testing.T) {
 	"E", "1", "H", "1", "D", "1", "I", "1", "C", "1", "Y", "1", "R", "1", "K", ".9", "T", ".94", "T", ".95", "Y", ".949"}
 	//1        2         3         4         5         6         7         8          9           10          11
 
-	altCache := make(map[string]map[string][]byte)
+	altCache := make(map[string]map[string][]string)
 
 	results := make(chan string)
 	wg := new(sync.WaitGroup)
@@ -428,7 +428,7 @@ func TestProcessSingleLine(t *testing.T) {
 	"C", "1", "T", "1", "Y", "1", "Y", "1", "C", "1", "C", "1", "C", "1", "K", "1", "Y", ".9", "R", ".94", "G", ".95", "W", ".949"}
 	//1        2         3         4         5         6         7         8          9           10          11
 
-	altCache := make(map[string]map[string][]byte)
+	altCache := make(map[string]map[string][]string)
 
 	results := make(chan string)
 	wg := new(sync.WaitGroup)
@@ -482,7 +482,7 @@ func TestProcessMultiallelicSnpLine(t *testing.T) {
 	"A", "1", "C", "1", "T", "1", "G", "1", "R", "1", "Y", "1", "G", ".5", "S", "1", "T", "1", "W", "1", "K", "1", "M", "1", "C", ".9", "E", ".96"}
 	//1        2         3         4         5         6         7         8         9         10        11        12        13          14
 
-	altCache := make(map[string]map[string][]byte)
+	altCache := make(map[string]map[string][]string)
 
 	results := make(chan string)
 	wg := new(sync.WaitGroup)
@@ -529,7 +529,7 @@ func TestProcessMultiallelicSnpLine(t *testing.T) {
 			//A -> T
 			//Sample3 is T, homozygote
 			//Sample6 is Y == [C, T], so it is heterozygous for T (also for C, allele 1)
-			//Sample9 is also T, homozygous
+			//Sample9 is also T, homozygous  
 			//Sample10 is W == [A, T], so is het
 			//Sample11 is K == [G, T], so is het (also het for allele 4, G)
 			if record[5] != "Sample6;Sample10;Sample11" {
