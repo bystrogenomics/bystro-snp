@@ -4,7 +4,10 @@ import (
 	"strings"
 	"testing"
 	// "fmt"
-	"sync"
+	"bufio"
+	// "log"
+	// "io"
+	// "sync"
 )
 
 func TestKeepFlagsTrue(t *testing.T) {
@@ -61,124 +64,118 @@ func TestValidType(t *testing.T) {
 }
 
 func TestGatherAlt(t *testing.T) {
-  altCache := make(map[string]map[string][]string)
+  altCache := make(map[byte]map[string][]string)
 
-  alleles := gatherAlt("A", "T", altCache)
+  alleles := gatherAlt('A', "T", altCache)
 
   if alleles[0] != "T" {
   	t.Error("Expected only alt to be T", alleles)
   }
 
-  if altCache["A"]["T"][0] != "T" {
+  if altCache['A']["T"][0] != "T" {
   	t.Error("Expected altCache to contain T alleles for ref:A alleles:T", alleles)
   }
 
-  alleles = gatherAlt("A", "A,T", altCache)
+  alleles = gatherAlt('A', "A,T", altCache)
 
   if alleles[0] != "T" {
   	t.Error("Expected only alt to be T", alleles)
   }
 
-  if altCache["A"]["A,T"][0] != "T" {
+  if altCache['A']["A,T"][0] != "T" {
   	t.Error("Expected altCache to contain T alleles for ref:A alleles:A,T", alleles)
   }
 
   for _, ref := range []string{"C","T","G"} {
-  	if len(altCache[ref]["A,T"]) != 0 {
+  	if len(altCache[ref[0]]["A,T"]) != 0 {
 	  	t.Error("Shouldn't have cached ref", ref, alleles)
   	}
   }
 
-  alleles = gatherAlt("A", "A,T,C", altCache)
+  alleles = gatherAlt('A', "A,T,C", altCache)
 
   if alleles[0] != "T" || alleles[1] != "C" {
   	t.Error("Expected multiallelic alts to be T first then C", alleles)
   }
 
-  if altCache["A"]["A,T,C"][0] != "T" || altCache["A"]["A,T,C"][1] != "C" {
+  if altCache['A']["A,T,C"][0] != "T" || altCache['A']["A,T,C"][1] != "C" {
   	t.Error("Expected altCache to contain T and C alleles for ref:A alleles:A,T,C", alleles)
   }
 
-  alleles = gatherAlt("A", "A,-9", altCache)
+  alleles = gatherAlt('A', "A,-9", altCache)
 
   if alleles[0] != "-9" {
   	t.Error("Expected alt to be - ", alleles)
   }
 
-  if altCache["A"]["A,-9"][0] != "-9" {
+  if altCache['A']["A,-9"][0] != "-9" {
   	t.Error("Expected altCache to contain - allele for ref:A alleles:A,-9", alleles)
   }
 
-  alleles = gatherAlt("A", "A,+AAT", altCache)
+  alleles = gatherAlt('A', "A,+AAT", altCache)
 
   if alleles[0] != "+AAT" {
   	t.Error("Expected alt to be +", alleles)
   }
 
-  if altCache["A"]["A,+AAT"][0] != "+AAT" {
+  if altCache['A']["A,+AAT"][0] != "+AAT" {
   	t.Error("Expected altCache to contain + allele for ref:A alleles:A,+AAT", alleles)
   }
 
-  alleles = gatherAlt("A", "A,+AATAACCCTTGGGG", altCache)
+  alleles = gatherAlt('A', "A,+AATAACCCTTGGGG", altCache)
 
   if alleles[0] != "+AATAACCCTTGGGG" {
   	t.Error("Expected alt to be +", alleles)
   }
 
-  if altCache["A"]["A,+AATAACCCTTGGGG"][0] != "+AATAACCCTTGGGG" {
+  if altCache['A']["A,+AATAACCCTTGGGG"][0] != "+AATAACCCTTGGGG" {
   	t.Error("Expected altCache to contain + allele for ref:A alleles:A,+AATAACCCTTGGGG", alleles)
   }
 
-  alleles = gatherAlt("A", "A,-9,+AATAACCCTTGGGG", altCache)
+  alleles = gatherAlt('A', "A,-9,+AATAACCCTTGGGG", altCache)
 
   if alleles[0] != "-9" || alleles[1] != "+AATAACCCTTGGGG" {
   	t.Error("Expected alt to be - and + for ref:A, alleles: A,-9,+AATAACCCTTGGGG", alleles)
   }
 
-  if altCache["A"]["A,-9,+AATAACCCTTGGGG"][0] != "-9"  || altCache["A"]["A,-9,+AATAACCCTTGGGG"][1] != "+AATAACCCTTGGGG" {
+  if altCache['A']["A,-9,+AATAACCCTTGGGG"][0] != "-9"  || altCache['A']["A,-9,+AATAACCCTTGGGG"][1] != "+AATAACCCTTGGGG" {
   	t.Error("Expected altCache to contain + allele for ref:A alleles:A,-9,+AATAACCCTTGGGG", alleles)
   }
 
-  alleles = gatherAlt("T", "A,-9,+AATAACCCTTGGGG", altCache)
+  alleles = gatherAlt('T', "A,-9,+AATAACCCTTGGGG", altCache)
 
   if alleles[0] != "A" || alleles[1] != "-9" || alleles[2] != "+AATAACCCTTGGGG" {
   	t.Error("Expected alt to be T, -, and + for ref:T, alleles: A,-9,+AATAACCCTTGGGG", alleles)
   }
 
-  if altCache["T"]["A,-9,+AATAACCCTTGGGG"][0] != "A" || altCache["T"]["A,-9,+AATAACCCTTGGGG"][1] != "-9" || altCache["T"]["A,-9,+AATAACCCTTGGGG"][2] != "+AATAACCCTTGGGG" {
+  if altCache['T']["A,-9,+AATAACCCTTGGGG"][0] != "A" || altCache['T']["A,-9,+AATAACCCTTGGGG"][1] != "-9" || altCache['T']["A,-9,+AATAACCCTTGGGG"][2] != "+AATAACCCTTGGGG" {
   	t.Error("Expected altCache to contain + allele for ref:T alleles:A,-9,+AATAACCCTTGGGG", alleles)
   }
 
-  alleles = gatherAlt("G", "A,C", altCache)
+  alleles = gatherAlt('G', "A,C", altCache)
 
   if alleles[0] != "A" || alleles[1] != "C" {
   	t.Error("Expected alt to be A, C for ref:T, alleles: A,C", alleles)
   }
 
-  if altCache["G"]["A,C"][0] != "A" || altCache["G"]["A,C"][1] != "C" {
+  if altCache['G']["A,C"][0] != "A" || altCache['G']["A,C"][1] != "C" {
   	t.Error("Expected altCache to contain + allele for ref:T alleles:A,-9,+AATAACCCTTGGGG", alleles)
   }
 }
 
 func TestProcessBiAllelicLine(t *testing.T) {
-	record := []string{"chr1", "10000", "C", "A,T", "1,100", "SNP", "W", "1", "A", "1", "T", "1"}
-	header := []string{"Fragment", "Position", "Reference", "Alleles", "Allele_counts", "Type", "Sample1", " ", "Sample2", " ", "Sample3", " "}
+	record := strings.Join([]string{"chr1", "10000", "C", "A,T", "1,100", "SNP", "W", "1", "A", "1", "T", "1"},"\t")
+	header := strings.Join([]string{"Fragment", "Position", "Reference", "Alleles", "Allele_counts", "Type", "Sample1", " ", "Sample2", " ", "Sample3", " "}, "\t")
 
-	altCache := make(map[string]map[string][]string)
+	lines := header + "\n" + record	+ "\n"
 
-	results := make(chan string)
-	wg := new(sync.WaitGroup)
-	go func() {
-		wg.Add(1)
-		go processLine(record, header, gatherAlt(record[refIdx], record[altIdx], altCache), "!", ";", .95, results, wg)
-		wg.Wait()
-		close(results)
+	reader := bufio.NewReader(strings.NewReader(lines))
 
-	}()
+	config := Config{emptyField: "!", fieldDelimiter: ";", minGq: .95}
 
 	i := 0
-	for row := range results {
-		record := strings.Split(row[:len(row) - 1], "\t")
+	readSnp(&config, reader, func(row string) {
+			record := strings.Split(row[:len(row) - 1], "\t")
 
 		if record[0] != "chr1" || record[1] != "10000" || record[2] != "C" && record[2] != "SNP" {
 			t.Error("Expect all rows to have the same chr:pos, reference, and type (SNP) in biallelic SNP")
@@ -213,31 +210,25 @@ func TestProcessBiAllelicLine(t *testing.T) {
 		}
 
 		i++
-	}
+	})
 
 	if i != 2 {
-		t.Error("Expect 2 alleles to be parsed from biallelic SNP")
+		t.Error("Expect 2 alleles to be parsed from biallelic SNP, got: ", i)
 	}
 }
 
 func TestProcessBiAllelicLineWithGenotypingError(t *testing.T) {
-	record := []string{"chr1", "10000", "C", "A,T", "1,100", "SNP", "K", "1", "A", "1", "T", "1"}
-	header := []string{"Fragment", "Position", "Reference", "Alleles", "Allele_counts", "Type", "Sample1", " ", "Sample2", " ", "Sample3", " "}
+	record := strings.Join([]string{"chr1", "10000", "C", "A,T", "1,100", "SNP", "K", "1", "A", "1", "T", "1"}, "\t")
+	header := strings.Join([]string{"Fragment", "Position", "Reference", "Alleles", "Allele_counts", "Type", "Sample1", " ", "Sample2", " ", "Sample3", " "}, "\t")
 
-	altCache := make(map[string]map[string][]string)
+	lines := header + "\n" + record	+ "\n"
 
-	results := make(chan string)
-	wg := new(sync.WaitGroup)
-	go func() {
-		wg.Add(1)
-		go processLine(record, header, gatherAlt(record[refIdx], record[altIdx], altCache), "!", ";", .95, results, wg)
-		wg.Wait()
-		close(results)
+	reader := bufio.NewReader(strings.NewReader(lines))
 
-	}()
+	config := Config{emptyField: "!", fieldDelimiter: ";", minGq: .95}
 
 	i := 0
-	for row := range results {
+	readSnp(&config, reader, func(row string) {
 		record := strings.Split(row[:len(row) - 1], "\t")
 
 		if record[0] != "chr1" || record[1] != "10000" || record[2] != "C" && record[2] != "SNP" {
@@ -273,7 +264,7 @@ func TestProcessBiAllelicLineWithGenotypingError(t *testing.T) {
 		}
 
 		i++
-	}
+	})
 
 	if i != 2 {
 		t.Error("Expect 2 alleles to be parsed from biallelic SNP")
@@ -281,23 +272,17 @@ func TestProcessBiAllelicLineWithGenotypingError(t *testing.T) {
 }
 
 func TestProcessBiAllelicLineWithLowCoverageError(t *testing.T) {
-	record := []string{"chr1", "10000", "C", "A,T", "1,100", "SNP", "K", "1", "A", "1", "T", ".9"}
-	header := []string{"Fragment", "Position", "Reference", "Alleles", "Allele_counts", "Type", "SampleA", " ", "Sample2", " ", "SampleB", " "}
+	record := strings.Join([]string{"chr1", "10000", "C", "A,T", "1,100", "SNP", "K", "1", "A", "1", "T", ".9"},"\t")
+	header := strings.Join([]string{"Fragment", "Position", "Reference", "Alleles", "Allele_counts", "Type", "SampleA", " ", "Sample2", " ", "SampleB", " "}, "\t")
 
-	altCache := make(map[string]map[string][]string)
+	lines := header + "\n" + record	+ "\n"
 
-	results := make(chan string)
-	wg := new(sync.WaitGroup)
-	go func() {
-		wg.Add(1)
-		go processLine(record, header, gatherAlt(record[refIdx], record[altIdx], altCache), "!", ";", .95, results, wg)
-		wg.Wait()
-		close(results)
+	reader := bufio.NewReader(strings.NewReader(lines))
 
-	}()
+	config := Config{emptyField: "!", fieldDelimiter: ";", minGq: .95}
 
 	i := 0
-	for row := range results {
+	readSnp(&config, reader, func(row string) {
 		record := strings.Split(row[:len(row) - 1], "\t")
 
 		if record[0] != "chr1" || record[1] != "10000" || record[2] != "C" && record[2] != "SNP" {
@@ -324,7 +309,7 @@ func TestProcessBiAllelicLineWithLowCoverageError(t *testing.T) {
 		// }
 
 		i++
-	}
+	})
 
 	if i != 1 {
 		t.Error("Expect 2 alleles to be parsed from biallelic SNP")
@@ -332,27 +317,21 @@ func TestProcessBiAllelicLineWithLowCoverageError(t *testing.T) {
 }
 
 func TestProcessMultiallelicLine(t *testing.T) {
-	header := []string{"Fragment", "Position", "Reference", "Alleles", "Allele_counts", "Type",
+	header := strings.Join([]string{"Fragment", "Position", "Reference", "Alleles", "Allele_counts", "Type",
 	"Sample1", " ", "Sample2", " ", "Sample3", " ", "Sample4", " ", "Sample5", " ", "Sample6", " ", "Sample7", " ", "Sample8", " ",
-	"Sample9", " ", "Sample10", " ", "Sample11", " "}
-	record := []string{"chr1", "10000", "C", "C,T,+AATC,-9", "1,100", "MULTIALLELIC",
-	"E", "1", "H", "1", "D", "1", "I", "1", "C", "1", "Y", "1", "R", "1", "K", ".9", "T", ".94", "T", ".95", "Y", ".949"}
+	"Sample9", " ", "Sample10", " ", "Sample11", " "}, "\t")
+	record := strings.Join([]string{"chr1", "10000", "C", "C,T,+AATC,-9", "1,100", "MULTIALLELIC",
+	"E", "1", "H", "1", "D", "1", "I", "1", "C", "1", "Y", "1", "R", "1", "K", ".9", "T", ".94", "T", ".95", "Y", ".949"}, "\t")
 	//1        2         3         4         5         6         7         8          9           10          11
 
-	altCache := make(map[string]map[string][]string)
+	lines := header + "\n" + record	+ "\n"
 
-	results := make(chan string)
-	wg := new(sync.WaitGroup)
-	go func() {
-		wg.Add(1)
-		go processLine(record, header, gatherAlt(record[refIdx], record[altIdx], altCache), "!", ";", .95, results, wg)
-		wg.Wait()
-		close(results)
+	reader := bufio.NewReader(strings.NewReader(lines))
 
-	}()
+	config := Config{emptyField: "!", fieldDelimiter: ";", minGq: .95}
 
 	i := 0
-	for row := range results {
+	readSnp(&config, reader, func(row string) {
 		record := strings.Split(row[:len(row) - 1], "\t")
 
 		if record[0] != "chr1" || record[1] != "10000" || record[2] != "C" && record[2] != "MULTIALLELIC" {
@@ -413,7 +392,7 @@ func TestProcessMultiallelicLine(t *testing.T) {
 		}
 
 		i++
-	}
+	})
 
 	if i != 3 {
 		t.Error("Expect 3 alleles to be parsed from this multiallelic", header, record)
@@ -421,27 +400,21 @@ func TestProcessMultiallelicLine(t *testing.T) {
 }
 
 func TestProcessSingleLine(t *testing.T) {
-	header := []string{"Fragment", "Position", "Reference", "Alleles", "Allele_counts", "Type",
+	header := strings.Join([]string{"Fragment", "Position", "Reference", "Alleles", "Allele_counts", "Type",
 	"Sample1", " ", "Sample2", " ", "Sample3", " ", "Sample4", " ", "Sample5", " ", "Sample6", " ", "Sample7", " ", "Sample8", " ",
-	"Sample9", " ", "Sample10", " ", "Sample11", " ", "Sample12", " "}
-	record := []string{"chr11", "12000", "C", "C,T", "1,100", "SNP",
-	"C", "1", "T", "1", "Y", "1", "Y", "1", "C", "1", "C", "1", "C", "1", "K", "1", "Y", ".9", "R", ".94", "G", ".95", "W", ".949"}
+	"Sample9", " ", "Sample10", " ", "Sample11", " ", "Sample12", " "}, "\t")
+	record := strings.Join([]string{"chr11", "12000", "C", "C,T", "1,100", "SNP",
+	"C", "1", "T", "1", "Y", "1", "Y", "1", "C", "1", "C", "1", "C", "1", "K", "1", "Y", ".9", "R", ".94", "G", ".95", "W", ".949"}, "\t")
 	//1        2         3         4         5         6         7         8          9           10          11
 
-	altCache := make(map[string]map[string][]string)
+	lines := header + "\n" + record	+ "\n"
 
-	results := make(chan string)
-	wg := new(sync.WaitGroup)
-	go func() {
-		wg.Add(1)
-		go processLine(record, header, gatherAlt(record[refIdx], record[altIdx], altCache), "!", ";", .95, results, wg)
-		wg.Wait()
-		close(results)
+	reader := bufio.NewReader(strings.NewReader(lines))
 
-	}()
+	config := Config{emptyField: "!", fieldDelimiter: ";", minGq: .95}
 
 	i := 0
-	for row := range results {
+	readSnp(&config, reader, func(row string) {
 		record := strings.Split(row[:len(row) - 1], "\t")
 
 		if record[0] != "chr11" || record[1] != "12000" || record[2] != "C" && record[2] != "SNP" {
@@ -467,7 +440,7 @@ func TestProcessSingleLine(t *testing.T) {
 		}
 
 		i++
-	}
+	})
 
 	if i != 1 {
 		t.Error("Expect 3 alleles to be parsed from this multiallelic", header, record)
@@ -475,27 +448,21 @@ func TestProcessSingleLine(t *testing.T) {
 }
 
 func TestProcessMultiallelicSnpLine(t *testing.T) {
-	header := []string{"Fragment", "Position", "Reference", "Alleles", "Allele_counts", "Type",
+	header := strings.Join([]string{"Fragment", "Position", "Reference", "Alleles", "Allele_counts", "Type",
 	"Sample1", " ", "Sample2", " ", "Sample3", " ", "Sample4", " ", "Sample5", " ", "Sample6", " ", "Sample7", " ", "Sample8", " ",
-	"Sample9", " ", "Sample10", " ", "Sample11", " ", "Sample12", " ", "Sample13", " ", "Sample14", " "}
-	record := []string{"chr1", "10000", "A", "C,T,A,G", "1,100", "MULTIALLELIC",
-	"A", "1", "C", "1", "T", "1", "G", "1", "R", "1", "Y", "1", "G", ".5", "S", "1", "T", "1", "W", "1", "K", "1", "M", "1", "C", ".9", "E", ".96"}
+	"Sample9", " ", "Sample10", " ", "Sample11", " ", "Sample12", " ", "Sample13", " ", "Sample14", " "}, "\t")
+	record := strings.Join([]string{"chr1", "10000", "A", "C,T,A,G", "1,100", "MULTIALLELIC",
+	"A", "1", "C", "1", "T", "1", "G", "1", "R", "1", "Y", "1", "G", ".5", "S", "1", "T", "1", "W", "1", "K", "1", "M", "1", "C", ".9", "E", ".96"}, "\t")
 	//1        2         3         4         5         6         7         8         9         10        11        12        13          14
 
-	altCache := make(map[string]map[string][]string)
+	lines := header + "\n" + record	+ "\n"
 
-	results := make(chan string)
-	wg := new(sync.WaitGroup)
-	go func() {
-		wg.Add(1)
-		go processLine(record, header, gatherAlt(record[refIdx], record[altIdx], altCache), "!", ";", .95, results, wg)
-		wg.Wait()
-		close(results)
+	reader := bufio.NewReader(strings.NewReader(lines))
 
-	}()
+	config := Config{emptyField: "!", fieldDelimiter: ";", minGq: .95}
 
 	i := 0
-	for row := range results {
+	readSnp(&config, reader, func(row string) {
 		record := strings.Split(row[:len(row) - 1], "\t")
 
 		if record[0] != "chr1" || record[1] != "10000" || record[2] != "C" && record[2] != "MULTIALLELIC" {
@@ -546,7 +513,7 @@ func TestProcessMultiallelicSnpLine(t *testing.T) {
 		}
 
 		i++
-	}
+	})
 
 	if i != 3 {
 		t.Error("Expect 3 alleles to be parsed from this multiallelic", header, record)
