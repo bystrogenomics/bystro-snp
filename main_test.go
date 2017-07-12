@@ -63,6 +63,24 @@ func TestValidType(t *testing.T) {
   }
 }
 
+func TestTrTv(t *testing.T) {
+  if trTvStatus("A", "T") != '2' || trTvStatus("T", "A") != '2' ||
+  trTvStatus("A", "C") != '2' || trTvStatus("C", "A") != '2' ||
+  trTvStatus("G", "C") != '2' || trTvStatus("C", "G") != '2' ||
+  trTvStatus("G", "T") != '2' || trTvStatus("T", "G") != '2' {
+    t.Error("Couldn't parse transversions")
+  }
+
+  if trTvStatus("A", "G") != '1' || trTvStatus("G", "A") != '1' ||
+  trTvStatus("C", "T") != '1' || trTvStatus("T", "C") != '1' {
+    t.Error("Couldn't parse transversions")
+  }
+
+  if trTvStatus("A", "-1") != '0' || trTvStatus("A", "+A") != '0' {
+    t.Error("Couldn't parse non-trTv sites")
+  }
+}
+
 func TestGatherAlt(t *testing.T) {
   altCache := make(map[byte]map[string][]string)
 
@@ -177,34 +195,46 @@ func TestProcessBiAllelicLine(t *testing.T) {
 	readSnp(&config, reader, func(row string) {
 			record := strings.Split(row[:len(row) - 1], "\t")
 
-		if record[0] != "chr1" || record[1] != "10000" || record[2] != "C" && record[2] != "SNP" {
+		if record[0] != "chr1" || record[1] != "10000" || record[2] != "SNP" || record[3] != "C" {
 			t.Error("Expect all rows to have the same chr:pos, reference, and type (SNP) in biallelic SNP")
 		}
 
+    if record[5] != "0" {
+      t.Error("Expect bi-allelic snp to not be tr or tv with value 0")
+    }
+
 		if i == 0 {
-			if record[5] != "Sample1" {
+      if record[4] != "A" {
+        t.Error("Expected allele 1 to be A", record)
+      }
+
+			if record[6] != "Sample1" {
 				t.Error("Expect Sample1 to be shown as het for allele A", record)
 			}
 
-			if record[6] != "Sample2" {
+			if record[7] != "Sample2" {
 				t.Error("Expect Sample2 to be shown as homozygous for allele A", record)
 			}
 
-			if record[7] != "!" {
+			if record[8] != "!" {
 				t.Error("Expect no missing genotypes", record)
 			}
 		}
 
 		if i == 1 {
-			if record[5] != "Sample1" {
+      if record[4] != "T" {
+        t.Error("Expected allele 2 to be T", record)
+      }
+
+			if record[6] != "Sample1" {
 				t.Error("Expect Sample1 to be shown as het for allele T", record)
 			}
 
-			if record[6] != "Sample3" {
+			if record[7] != "Sample3" {
 				t.Error("Expect Sample3 to be shown as het for allele T", record)
 			}
 
-			if record[7] != "!" {
+			if record[8] != "!" {
 				t.Error("Expect no missing genotypes", record)
 			}
 		}
@@ -231,34 +261,46 @@ func TestProcessBiAllelicLineWithGenotypingError(t *testing.T) {
 	readSnp(&config, reader, func(row string) {
 		record := strings.Split(row[:len(row) - 1], "\t")
 
-		if record[0] != "chr1" || record[1] != "10000" || record[2] != "C" && record[2] != "SNP" {
+		if record[0] != "chr1" || record[1] != "10000" || record[2] != "SNP" || record[3] != "C" {
 			t.Error("Expect all rows to have the same chr:pos, reference, and type (SNP) in biallelic SNP")
 		}
 
+    if record[5] != "0" {
+      t.Error("Expect bi-allelic snp to not be tr or tv with value 0")
+    }
+
 		if i == 0 {
-			if record[5] != "!" {
+      if record[4] != "A" {
+        t.Error("Expected allele 1 to be A", record)
+      }
+
+			if record[6] != "!" {
 				t.Error("Expect Sample1 to be shown as het for allele A", record)
 			}
 
-			if record[6] != "Sample2" {
+			if record[7] != "Sample2" {
 				t.Error("Expect Sample2 to be shown as homozygous for allele A", record)
 			}
 
-			if record[7] != "Sample1" {
+			if record[8] != "Sample1" {
 				t.Error("Expect Sample1 to be missing for first allele, because miscalled relative to Alleles", record)
 			}
 		}
 
 		if i == 1 {
-			if record[5] != "!" {
+      if record[4] != "T" {
+        t.Error("Expected allele 2 to be T", record)
+      }
+
+			if record[6] != "!" {
 				t.Error("Expect Sample1 to be shown as het for allele T", record)
 			}
 
-			if record[6] != "Sample3" {
+			if record[7] != "Sample3" {
 				t.Error("Expect Sample3 to be shown as het for allele T", record)
 			}
 
-			if record[7] != "Sample1" {
+			if record[8] != "Sample1" {
 				t.Error("Expect Sample1 to be missing for first allele, because miscalled relative to Alleles", record)
 			}
 		}
@@ -285,20 +327,28 @@ func TestProcessBiAllelicLineWithLowCoverageError(t *testing.T) {
 	readSnp(&config, reader, func(row string) {
 		record := strings.Split(row[:len(row) - 1], "\t")
 
-		if record[0] != "chr1" || record[1] != "10000" || record[2] != "C" && record[2] != "SNP" {
+		if record[0] != "chr1" || record[1] != "10000" || record[2] != "SNP" || record[3] != "C" {
 			t.Error("Expect all rows to have the same chr:pos, reference, and type (SNP) in biallelic SNP")
 		}
 
+    if record[5] != "0" {
+      t.Error("Expect bi-allelic snp to not be tr or tv with value 0")
+    }
+
 		if i == 0 {
-			if record[5] != "!" {
+      if record[4] != "A" {
+        t.Error("Expected allele 1 to be A", record)
+      }
+
+			if record[6] != "!" {
 				t.Error("Expect Sample1 to be shown as het for allele A", record)
 			}
 
-			if record[6] != "Sample2" {
+			if record[7] != "Sample2" {
 				t.Error("Expect Sample2 to be shown as homozygous for allele A", record)
 			}
 
-			if record[7] != "SampleA;SampleB" {
+			if record[8] != "SampleA;SampleB" {
 				t.Error(`Expect Sample1 and Sample3 to be missing for first allele, because
 					Samples 1 miscalled relative to Alleles, and Sample3 lower than requested .95 confidence`, record)
 			}
@@ -334,59 +384,74 @@ func TestProcessMultiallelicLine(t *testing.T) {
 	readSnp(&config, reader, func(row string) {
 		record := strings.Split(row[:len(row) - 1], "\t")
 
-		if record[0] != "chr1" || record[1] != "10000" || record[2] != "C" && record[2] != "MULTIALLELIC" {
+		if record[0] != "chr1" || record[1] != "10000" || record[2] != "MULTIALLELIC" || record[3] != "C" {
 			t.Error("Expect all rows to have the same chr:pos, reference, and type (MULTIALLELIC) in MULTIALLELIC")
 		}
+
+    if record[5] != "0" {
+      t.Error("Expect multiallelics to be set to 0 trTv", record)
+    }
 
 		// Allele 1 is reference, will not be put into a row
 		// Likewise, Sample 5 is reference homozygote, so will not appear in any row
 		// the T alelles
 		if i == 0 {
+      if record[4] != "T" {
+        t.Error("Expect allele 1 to be C", record)
+      }
 			// Sample6 has genotype Y == [C,T], so that is a valid het
 			// Sample7 has genotype R == [A,G], so that is invalid (missing)
 			// Sample8 has genotype K == [G,T], so that is invalid (missing)
 			// Sample9 has genotype T, which is valid homozygote, but it has too low confidence, so missing in all rows
 			// Sample10 has genotype T, which is valid homozygote, and has just high enough confidence
 			// Sample11 has genotype Y, which is valid het, but confidence is too low
-			if record[5] != "Sample6" {
+			if record[6] != "Sample6" {
 				t.Error("Expect Sample6 to be shown as het for allele T", record)
 			}
 
-			if record[6] != "Sample10" {
+			if record[7] != "Sample10" {
 				t.Error("Expect Sample10 to be shown as homozygous for allele T", record)
 			}
 
-			if record[7] != "Sample7;Sample8;Sample9;Sample11" {
+			if record[8] != "Sample7;Sample8;Sample9;Sample11" {
 				t.Error("Expect Sample7;Sample8;Sample9;Sample11 missing on all lines", record)
 			}
 		}
 
 		// The +AATC
 		if i == 1 {
-			if record[5] != "Sample2" {
+      if record[4] != "+AATC" {
+        t.Error("Expect allele 1 to be +AATC", record)
+      }
+
+			if record[6] != "Sample2" {
 				t.Error("Expect Sample2 to be shown as het for allele +AATC", record)
 			}
 
-			if record[6] != "Sample4" {
+			if record[7] != "Sample4" {
 				t.Error("Expect Sample3 to be shown as homozygous for allele +AATC", record)
 			}
 
-			if record[7] != "Sample7;Sample8;Sample9;Sample11" {
+			if record[8] != "Sample7;Sample8;Sample9;Sample11" {
 				t.Error("Expect Sample7;Sample8;Sample9;Sample11 missing on all lines", record)
 			}
 		}
 
 		// The -9
 		if i == 2 {
-			if record[5] != "Sample1" {
+      if record[4] != "-9" {
+        t.Error("Expect allele 1 to be -9", record)
+      }
+
+			if record[6] != "Sample1" {
 				t.Error("Expect Sample1 to be shown as het for allele -9", record)
 			}
 
-			if record[6] != "Sample3" {
+			if record[7] != "Sample3" {
 				t.Error("Expect Sample3 to be shown as homozygous for allele -9", record)
 			}
 
-			if record[7] != "Sample7;Sample8;Sample9;Sample11" {
+			if record[8] != "Sample7;Sample8;Sample9;Sample11" {
 				t.Error("Expect Sample7;Sample8;Sample9;Sample11 missing on all lines", record)
 			}
 		}
@@ -417,9 +482,17 @@ func TestProcessSingleLine(t *testing.T) {
 	readSnp(&config, reader, func(row string) {
 		record := strings.Split(row[:len(row) - 1], "\t")
 
-		if record[0] != "chr11" || record[1] != "12000" || record[2] != "C" && record[2] != "SNP" {
-			t.Error("Expect all rows to have the same chr:pos, reference, and type (SNP) in biallelic SNP")
+		if record[0] != "chr11" || record[1] != "12000" || record[2] != "SNP" || record[3] != "C" {
+			t.Error("Expect all rows to have the same chr:pos, reference, and type (SNP) in biallelic SNP", record)
 		}
+
+    if record[4] != "T" {
+        t.Error("Expected allele 1 to be T", record)
+    }
+
+    if record[5] != "1" {
+      t.Error("Expect SNP C->T to be a transition with value 1")
+    }
 
 		// Sample6 has genotype Y == [C,T], so that is a valid het
 		// Sample7 has genotype R == [A,G], so that is invalid (missing)
@@ -427,15 +500,15 @@ func TestProcessSingleLine(t *testing.T) {
 		// Sample9 has genotype T, which is valid homozygote, but it has too low confidence, so missing in all rows
 		// Sample10 has genotype T, which is valid homozygote, and has just high enough confidence
 		// Sample11 has genotype Y, which is valid het, but confidence is too low
-		if record[5] != "Sample3;Sample4" {
+		if record[6] != "Sample3;Sample4" {
 			t.Error("Expect Sample6 to be shown as het for allele T", record)
 		}
 
-		if record[6] != "Sample2" {
+		if record[7] != "Sample2" {
 			t.Error("Expect Sample2 to be shown as homozygous for allele for simple SNP", record)
 		}
 
-		if record[7] != "Sample8;Sample9;Sample10;Sample11;Sample12" {
+		if record[8] != "Sample8;Sample9;Sample10;Sample11;Sample12" {
 			t.Error("Expect Sample8;Sample9;Sample10;Sample11;Sample12 missing on all lines", record)
 		}
 
@@ -465,13 +538,19 @@ func TestProcessMultiallelicSnpLine(t *testing.T) {
 	readSnp(&config, reader, func(row string) {
 		record := strings.Split(row[:len(row) - 1], "\t")
 
-		if record[0] != "chr1" || record[1] != "10000" || record[2] != "C" && record[2] != "MULTIALLELIC" {
-			t.Error("Expect all rows to have the same chr:pos, reference, and type (MULTIALLELIC) in MULTIALLELIC")
+		if record[0] != "chr1" || record[1] != "10000" || record[2] != "MULTIALLELIC" || record[3] != "A"{
+			t.Error("Expect all rows to have the same chr:pos, reference, and type (MULTIALLELIC) in MULTIALLELIC", record)
 		}
 
+    if record[5] != "0" {
+      t.Error("Expect multiallelic to have trTv 0")
+    }
 		// Allele 3 is reference, will not be put into a row
 		if i == 0 {
 			// A -> C
+      if record[4] != "C" {
+        t.Error("Expect first allele to be C")
+      }
 			// Sample2 has genotype C, homozygote
 			// Sample6 has genotype Y == [C,T], het (will also be het for allele 2, T)
 			// Sample8 has genotype S == [G,C], het (will also be het for allele 4, G)
@@ -479,35 +558,38 @@ func TestProcessMultiallelicSnpLine(t *testing.T) {
 			// Sample7 has G, which doesn't match, but it is missing because .5 < .95 confidence
 			// Sample13 has C, but .9 < .95 confidence, so missing in all alleles
 			// Sample14 has an E, which doesn't exist in the allele list
-			if record[5] != "Sample6;Sample8;Sample12" {
+			if record[6] != "Sample6;Sample8;Sample12" {
 				t.Error("Expect Sample6 to be shown as het for allele T", record)
 			}
 
-			if record[6] != "Sample2" {
+			if record[7] != "Sample2" {
 				t.Error("Expect Sample10 to be shown as homozygous for allele T", record)
 			}
 
-			if record[7] != "Sample7;Sample13;Sample14" {
+			if record[8] != "Sample7;Sample13;Sample14" {
 				t.Error("Expect Sample7;Sample8;Sample9;Sample11 missing on all lines", record)
 			}
 		}
 
 		if i == 1 {
 			//A -> T
+      if record[4] != "T" {
+        t.Error("Expect second allele to be T")
+      }
 			//Sample3 is T, homozygote
 			//Sample6 is Y == [C, T], so it is heterozygous for T (also for C, allele 1)
 			//Sample9 is also T, homozygous  
 			//Sample10 is W == [A, T], so is het
 			//Sample11 is K == [G, T], so is het (also het for allele 4, G)
-			if record[5] != "Sample6;Sample10;Sample11" {
+			if record[6] != "Sample6;Sample10;Sample11" {
 				t.Error("Expect Sample6 to be shown as het for allele T", record)
 			}
 
-			if record[6] != "Sample3;Sample9" {
+			if record[7] != "Sample3;Sample9" {
 				t.Error("Expect Sample10 to be shown as homozygous for allele T", record)
 			}
 
-			if record[7] != "Sample7;Sample13;Sample14" {
+			if record[8] != "Sample7;Sample13;Sample14" {
 				t.Error("Expect Sample7;Sample8;Sample9;Sample11 missing on all lines", record)
 			}
 		}

@@ -189,6 +189,14 @@ func processLine(header []string, emptyField string, fieldDelimiter string, minG
 	    output.WriteString(alt)
 	    output.WriteString("\t")
 
+      if(len(altAlleles) > 1) {
+        output.WriteRune('0')
+      } else {
+        output.WriteRune(trTvStatus(record[refIdx], alt))
+      }
+
+      output.WriteString("\t")
+
 	    if len(hets[i]) == 0 {
 	      output.WriteString(emptyField)
 	    } else {
@@ -336,6 +344,21 @@ func makeHetHomozygotes(fields []string, header []string, altAlleles []string, m
   }
 
   return hom, het, missing
+}
+
+func trTvStatus(ref string, alt string) rune {
+  if len(alt) > 1 {
+    return '0'
+  }
+
+  // Transition
+  if (ref == "A" && alt == "G") || (ref == "G" && alt == "A") || (ref == "C" && alt =="T") ||
+  (ref == "T" && alt == "C") {
+    return '1'
+  }
+
+  // Transversion
+  return '2'
 }
 
 func appendMissing(numAlt int, sampleName string, arr [][]string) {
