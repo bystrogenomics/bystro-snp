@@ -10,9 +10,8 @@ import (
   "os"
   "strings"
   "sync"
-  "regexp"
   "strconv"
-  // "runtime"
+  "github.com/akotlar/sequtils/parse"
 )
 
 const concurrency int = 3
@@ -86,7 +85,7 @@ func readSnp(config *Config, reader *bufio.Reader, resultFunc func(row string)) 
 	results := make(chan string, 100)
 	var wg sync.WaitGroup
 
-	endOfLineByte, numChars, headerLine, err := findEndOfLineChar(reader, "")
+	endOfLineByte, numChars, headerLine, err := parse.FindEndOfLine(reader, "")
 
   if err != nil {
     log.Fatal(err)
@@ -99,7 +98,7 @@ func readSnp(config *Config, reader *bufio.Reader, resultFunc func(row string)) 
   }
 
   // Remove periods from sample names
-  normalizeSampleNames(header)
+  parse.NormalizeHeader(header)
 
 	// Read the lines into the work queue.
 	go func() {
@@ -192,7 +191,7 @@ func processLine(header []string, emptyField string, fieldDelimiter string, minG
       if(len(altAlleles) > 1) {
         output.WriteRune('0')
       } else {
-        output.WriteRune(trTvStatus(record[refIdx], alt))
+        output.WriteRune(parse.TrTv(record[refIdx], alt))
       }
 
       output.WriteString("\t")
@@ -269,7 +268,7 @@ func makeHetHomozygotes(fields []string, header []string, altAlleles []string, m
     }
 
     if fields[i] == "N" {
-      appendMissing(len(altAlleles), header[i], missing)
+      parse.AppendMissing(len(altAlleles), header[i], missing)
       continue
     }
 
@@ -277,12 +276,12 @@ func makeHetHomozygotes(fields []string, header []string, altAlleles []string, m
 
     if err != nil {
       log.Printf("%s:%s: %s genotype invalid confidence %s", fields[chromIdx], fields[posIdx], header[i], fields[i + 1])
-      appendMissing(len(altAlleles), header[i], missing)
+      parse.AppendMissing(len(altAlleles), header[i], missing)
       continue
     }
 
     if conf < minGQ {
-      appendMissing(len(altAlleles), header[i], missing)
+      parse.AppendMissing(len(altAlleles), header[i], missing)
       continue
     }
 
@@ -298,7 +297,7 @@ func makeHetHomozygotes(fields []string, header []string, altAlleles []string, m
         }
       }
 
-      appendMissing(len(altAlleles), header[i], missing)
+      parse.AppendMissing(len(altAlleles), header[i], missing)
       log.Printf("%s:%s: %s genotype %s not in Alleles", fields[chromIdx], fields[posIdx], header[i], fields[i])
       continue
     }
@@ -308,7 +307,7 @@ func makeHetHomozygotes(fields []string, header []string, altAlleles []string, m
 
     if !ok {
       log.Printf("%s:%s: %s genotype %s not IUPAC", fields[chromIdx], fields[posIdx], header[i], fields[i])
-      appendMissing(len(altAlleles), header[i], missing)
+      parse.AppendMissing(len(altAlleles), header[i], missing)
       continue
     }
 
@@ -344,71 +343,4 @@ func makeHetHomozygotes(fields []string, header []string, altAlleles []string, m
   }
 
   return hom, het, missing
-}
-
-func trTvStatus(ref string, alt string) rune {
-  if len(alt) > 1 {
-    return '0'
-  }
-
-  // Transition
-  if (ref == "A" && alt == "G") || (ref == "G" && alt == "A") || (ref == "C" && alt =="T") ||
-  (ref == "T" && alt == "C") {
-    return '1'
-  }
-
-  // Transversion
-  return '2'
-}
-
-func appendMissing(numAlt int, sampleName string, arr [][]string) {
-  for i := 0; i < numAlt; i++ {
-    arr[i] = append(arr[i], sampleName)
-  }
-}
-
-
-func normalizeSampleNames(header []string) {
-  re := regexp.MustCompile(`[^a-zA-Z0-9_-]`)
-
-  for i := firstSampleIdx; i < len(header); i+= 2 {
-    header[i] = re.ReplaceAllString(header[i], "_")
-  }
-}
-
-
-func findEndOfLineChar (r *bufio.Reader, s string) (byte, int, string, error) {
-  runeChar, _, err := r.ReadRune()
-
-  if err != nil {
-    return byte(0), 0, "", err
-  }
-
-  if runeChar == '\r' {
-    nextByte, err := r.Peek(1)
-
-    if err != nil {
-      return byte(0), 0, "", err
-    }
-
-    if rune(nextByte[0]) == '\n' {
-      //Remove the line feed
-      _, _, err = r.ReadRune()
-
-      if err != nil {
-        return byte(0), 0, "", err
-      }
-
-      return nextByte[0], 2, s, nil
-    }
-
-    return byte('\r'), 1, s, nil
-  }
-
-  if runeChar == '\n' {
-    return byte('\n'), 1, s, nil
-  }
-
-  s += string(runeChar)
-  return findEndOfLineChar(r, s)
 }
