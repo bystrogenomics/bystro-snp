@@ -564,7 +564,7 @@ func TestProcessMultiallelicSnpLine(t *testing.T) {
 			//Sample10 is W == [A, T], so is het
 			//Sample11 is K == [G, T], so is het (also het for allele 4, G)
 			if record[6] != "Sample6;Sample10;Sample11" {
-				t.Error("Expect Sample6 to be shown as het for allele T", record)
+				t.Error("Expect Sample6;Sample10;Sample11 to be shown as het for allele T", record)
 			}
 
 			if record[7] != "Sample3;Sample9" {
@@ -576,6 +576,29 @@ func TestProcessMultiallelicSnpLine(t *testing.T) {
 			}
 		}
 
+    if i == 2 {
+      //A -> T
+      if record[4] != "G" {
+        t.Error("Expect third allele to be G")
+      }
+      //Sample4 is G, homozygote
+      //Sample7 is G, but low confidence
+      //Sample5 is R, which is het A/G  
+      //Sample8 is S, which is het G/T
+      //Sample11 is K == [G, T], so is het (also het for allele 4, G)
+      if record[6] != "Sample5;Sample8;Sample11" {
+        t.Error("Expect Sample5;Sample8;Sample11 to be shown as het for allele T", record)
+      }
+
+      if record[7] != "Sample4" {
+        t.Error("Expect Sample4 to be shown as homozygous for allele T (Sample7 is homozygous G, but is < .95 confidence", record)
+      }
+
+      if record[8] != "Sample7;Sample13;Sample14" {
+        t.Error("Expect Sample7;Sample8;Sample9;Sample11 missing on all lines", record)
+      }
+    }
+
 		i++
 	})
 
@@ -584,6 +607,97 @@ func TestProcessMultiallelicSnpLine(t *testing.T) {
 	}
 }
 
+func TestNoSamples(t *testing.T) {
+  header := strings.Join([]string{"Fragment", "Position", "Reference", "Alleles", "Allele_counts", "Type"}, "\t")
+  record := strings.Join([]string{"chr1", "10000", "A", "A,T", "1,100", "SNP"}, "\t")
+  //1        2         3         4         5         6         7         8         9         10        11        12        13          14
+
+  lines := header + "\n" + record + "\n"
+
+  reader := bufio.NewReader(strings.NewReader(lines))
+
+  config := Config{emptyField: "!", fieldDelimiter: ";", minGq: .95}
+
+  i := 0
+  readSnp(&config, reader, func(row string) {
+    record := strings.Split(row[:len(row) - 1], "\t")
+
+    if record[0] != "chr1" || record[1] != "10000" || record[2] != "SNP" || record[3] != "A"{
+      t.Error("Expect all rows to have the same chr:pos, reference, and type (MULTIALLELIC) in MULTIALLELIC", record)
+    }
+
+    if record[5] != "2" && record[6] != "T" {
+      t.Error("Expect SNP to be considered A->T which is a transversion (2)")
+    }
+
+    if record[7] != "!" && record[8] != "!" && record[9] != "!" {
+      t.Error("Expect no samples to be found")
+    }
+
+    i++
+  })
+
+  if i != 1 {
+    t.Error("Expect 1 alleles to be parsed from this SNP", header, record)
+  }
+}
+
+func TestMultiAllelicNoSamples(t *testing.T) {
+  header := strings.Join([]string{"Fragment", "Position", "Reference", "Alleles", "Allele_counts", "Type"}, "\t")
+  record := strings.Join([]string{"chr1", "10000", "A", "C,T,A,G", "1,100", "MULTIALLELIC"}, "\t")
+  //1        2         3         4         5         6         7         8         9         10        11        12        13          14
+
+  lines := header + "\n" + record + "\n"
+
+  reader := bufio.NewReader(strings.NewReader(lines))
+
+  config := Config{emptyField: "!", fieldDelimiter: ";", minGq: .95}
+
+  i := 0
+  readSnp(&config, reader, func(row string) {
+    record := strings.Split(row[:len(row) - 1], "\t")
+
+    if record[0] != "chr1" || record[1] != "10000" || record[2] != "MULTIALLELIC" || record[3] != "A" {
+      t.Error("Expect all rows to have the same chr:pos, reference, and type (MULTIALLELIC) in MULTIALLELIC", record)
+    }
+
+    if record[5] != "0" {
+      t.Error("Expect multiallelic to have trTv 0")
+    }
+
+    if record[7] != "!" && record[8] != "!" && record[9] != "!" {
+      t.Error("Expect no samples to be found")
+    }
+
+    // Allele 3 is reference, will not be put into a row
+    if i == 0 {
+      // A -> C
+      if record[4] != "C" {
+        t.Error("Expect first allele to be C")
+      }
+    }
+
+    if i == 1 {
+      //A -> T
+      if record[4] != "T" {
+        t.Error("Expect second allele to be T")
+      }
+    }
+
+    if i == 2 {
+      //A -> T
+      if record[4] != "G" {
+        t.Error("Expect second allele to be T")
+      }
+    }
+
+    i++
+  })
+
+  if i != 3 {
+    t.Error("Expect 3 alleles to be parsed from this multiallelic", header, record)
+  }
+}
 // func TestFindEndOfLineChar (t *testing.T) {
 // 	header := "Testing 1 2 3\r"
 // 	reader := bufio.NewReader

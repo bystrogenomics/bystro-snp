@@ -196,7 +196,7 @@ func processLine(header []string, emptyField string, fieldDelimiter string, minG
 
       output.WriteString("\t")
 
-	    if len(hets[i]) == 0 {
+	    if len(hets) == 0 || len(hets[i]) == 0 {
 	      output.WriteString(emptyField)
 	    } else {
 	      output.WriteString(strings.Join(hets[i], fieldDelimiter))
@@ -204,7 +204,7 @@ func processLine(header []string, emptyField string, fieldDelimiter string, minG
 
 	    output.WriteString("\t")
 
-	    if len(homs[i]) == 0 {
+	    if len(homs) == 0 || len(homs[i]) == 0 {
 	      output.WriteString(emptyField)
 	    } else {
 	      output.WriteString(strings.Join(homs[i], fieldDelimiter))
@@ -212,7 +212,7 @@ func processLine(header []string, emptyField string, fieldDelimiter string, minG
 
 	    output.WriteString("\t")
 
-	    if len(missing[i]) == 0 {
+	    if len(missing) == 0 || len(missing[i]) == 0 {
 	      output.WriteString(emptyField)
 	    } else {
 	      output.WriteString(strings.Join(missing[i], fieldDelimiter))
