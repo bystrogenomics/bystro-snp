@@ -189,9 +189,9 @@ func processLine(header []string, emptyField string, fieldDelimiter string, minG
 	    output.WriteString("\t")
 
       if(len(altAlleles) > 1) {
-        output.WriteRune(parse.NotTrTv)
+        output.WriteString(parse.NotTrTv)
       } else {
-        output.WriteRune(parse.GetTrTv(record[refIdx], alt))
+        output.WriteString(parse.GetTrTv(record[refIdx], alt))
       }
 
       output.WriteString("\t")
