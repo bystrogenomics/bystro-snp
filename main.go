@@ -11,7 +11,7 @@ import (
   "strings"
   "sync"
   "strconv"
-  "github.com/akotlar/sequtils/parse"
+  "github.com/akotlar/bystro-utils/parse"
 )
 
 const concurrency int = 3
