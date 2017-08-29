@@ -181,7 +181,13 @@ func processLine(header []string, emptyField string, fieldDelimiter string, minG
 	    output.WriteString("\t")
 	    output.WriteString(record[posIdx])
 	    output.WriteString("\t")
-	    output.WriteString(record[typeIdx])
+
+      if len(altAlleles) > 1 {
+        output.WriteString("MULTIALLELIC")
+      } else {
+        output.WriteString(record[typeIdx])
+      }
+
 	    output.WriteString("\t")
 	    output.WriteString(record[refIdx])
 	    output.WriteString("\t")

@@ -177,8 +177,8 @@ func TestProcessBiAllelicLine(t *testing.T) {
 	readSnp(&config, reader, func(row string) {
 			record := strings.Split(row[:len(row) - 1], "\t")
 
-		if record[0] != "chr1" || record[1] != "10000" || record[2] != "SNP" || record[3] != "C" {
-			t.Error("Expect all rows to have the same chr:pos, reference, and type (SNP) in biallelic SNP")
+		if record[0] != "chr1" || record[1] != "10000" || record[2] != "MULTIALLELIC" || record[3] != "C" {
+			t.Error("Expect all rows to have the same chr:pos, reference, and type MULTIALLELIC in biallelic SNP: we empirically generate the 'type'")
 		}
 
     if record[5] != "0" {
@@ -243,8 +243,8 @@ func TestProcessBiAllelicLineWithGenotypingError(t *testing.T) {
 	readSnp(&config, reader, func(row string) {
 		record := strings.Split(row[:len(row) - 1], "\t")
 
-		if record[0] != "chr1" || record[1] != "10000" || record[2] != "SNP" || record[3] != "C" {
-			t.Error("Expect all rows to have the same chr:pos, reference, and type (SNP) in biallelic SNP")
+		if record[0] != "chr1" || record[1] != "10000" || record[2] != "MULTIALLELIC" || record[3] != "C" {
+			t.Error("Expect all rows to have the same chr:pos, reference, and type MULTIALLELIC in biallelic SNP: we empircally generate the 'type'")
 		}
 
     if record[5] != "0" {
@@ -309,8 +309,8 @@ func TestProcessBiAllelicLineWithLowCoverageError(t *testing.T) {
 	readSnp(&config, reader, func(row string) {
 		record := strings.Split(row[:len(row) - 1], "\t")
 
-		if record[0] != "chr1" || record[1] != "10000" || record[2] != "SNP" || record[3] != "C" {
-			t.Error("Expect all rows to have the same chr:pos, reference, and type (SNP) in biallelic SNP")
+		if record[0] != "chr1" || record[1] != "10000" || record[2] != "MULTIALLELIC" || record[3] != "C" {
+			t.Error("Expect all rows to have the same chr:pos, reference, and type MULTIALLELIC in biallelic SNPs: we empirically generate the 'type'")
 		}
 
     if record[5] != "0" {
