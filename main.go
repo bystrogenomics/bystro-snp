@@ -65,27 +65,27 @@ func init() {
 }
 
 func main() {
-	config := setup(nil)
+  config := setup(nil)
 
-	inFh := os.Stdin
+  inFh := os.Stdin
 
-	// Close when the functin returns
-	defer inFh.Close()
+  // Close when the functin returns
+  defer inFh.Close()
 
-	reader := bufio.NewReader(inFh)
+  reader := bufio.NewReader(inFh)
 
-	readSnp(config, reader, func(row string) {fmt.Print(row)})
+  readSnp(config, reader, func(row string) {fmt.Print(row)})
 }
 
 func readSnp(config *Config, reader *bufio.Reader, resultFunc func(row string)) {
-	// Read buffer
-	workQueue := make(chan string, 100)
-	complete := make(chan bool)
-	// Write buffer
-	results := make(chan string, 100)
-	var wg sync.WaitGroup
+  // Read buffer
+  workQueue := make(chan string, 100)
+  complete := make(chan bool)
+  // Write buffer
+  results := make(chan string, 100)
+  var wg sync.WaitGroup
 
-	endOfLineByte, numChars, headerLine, err := parse.FindEndOfLine(reader, "")
+  endOfLineByte, numChars, headerLine, err := parse.FindEndOfLine(reader, "")
 
   if err != nil {
     log.Fatal(err)
@@ -100,10 +100,10 @@ func readSnp(config *Config, reader *bufio.Reader, resultFunc func(row string)) 
   // Remove periods from sample names
   parse.NormalizeHeader(header)
 
-	// Read the lines into the work queue.
-	go func() {
-		for {
-			row, err := reader.ReadString(endOfLineByte) // 0x0A separator = newline
+  // Read the lines into the work queue.
+  go func() {
+    for {
+      row, err := reader.ReadString(endOfLineByte) // 0x0A separator = newline
 
       if err == io.EOF {
         break
@@ -115,72 +115,72 @@ func readSnp(config *Config, reader *bufio.Reader, resultFunc func(row string)) 
         continue
       }
 
-			workQueue <- row[:len(row) - numChars];
-		}
+      workQueue <- row[:len(row) - numChars];
+    }
 
-		// Close the channel so everyone reading from it knows we're done.
-		close(workQueue)
-	}()
+    // Close the channel so everyone reading from it knows we're done.
+    close(workQueue)
+  }()
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for line := range results {
-			resultFunc(line)
-		}
-	}()
+  wg.Add(1)
+  go func() {
+    defer wg.Done()
+    for line := range results {
+      resultFunc(line)
+    }
+  }()
 
-	// Now read them all off, concurrently.
-	for i := 0; i < concurrency; i++ {
-		go processLine(header, config.emptyField, config.fieldDelimiter, config.minGq, workQueue, results, complete)
-	}
+  // Now read them all off, concurrently.
+  for i := 0; i < concurrency; i++ {
+    go processLine(header, config.emptyField, config.fieldDelimiter, config.minGq, workQueue, results, complete)
+  }
 
-	// Wait for everyone to finish.
-	for i := 0; i < concurrency; i++ {
-		<-complete
-	}
+  // Wait for everyone to finish.
+  for i := 0; i < concurrency; i++ {
+    <-complete
+  }
 
-	close(results)
+  close(results)
 
-	wg.Wait()
+  wg.Wait()
 }
 
 func processLine(header []string, emptyField string, fieldDelimiter string, minGq float64, queue chan string, results chan string, complete chan bool) {
-	alleleCache := make(map[byte]map[string][]string)
-	var altAlleles []string
+  alleleCache := make(map[byte]map[string][]string)
+  var altAlleles []string
 
-	for line := range queue {
-		record := strings.Split(line, "\t")
+  for line := range queue {
+    record := strings.Split(line, "\t")
 
-		if !validType(record[typeIdx]) {
+    if !validType(record[typeIdx]) {
       continue
     }
 
-	  var homs [][]string
-	  var hets [][]string
-	  var missing [][]string
+    var homs [][]string
+    var hets [][]string
+    var missing [][]string
 
-	  // Hit rate for this is quite high; runs only 12 times for all SNPs
-	  // and N times for indels, multiallelics, but those are rare, and do repeat
-	  altAlleles = gatherAlt(record[refIdx][0], record[altIdx], alleleCache)
+    // Hit rate for this is quite high; runs only 12 times for all SNPs
+    // and N times for indels, multiallelics, but those are rare, and do repeat
+    altAlleles = gatherAlt(record[refIdx][0], record[altIdx], alleleCache)
 
-	  if len(header) > firstSampleIdx {
-	    homs, hets, missing = makeHetHomozygotes(record, header, altAlleles, minGq)
-	  }
+    if len(header) > firstSampleIdx {
+      homs, hets, missing = makeHetHomozygotes(record, header, altAlleles, minGq)
+    }
 
-	  for i, alt := range altAlleles {
-	    // If no sampels are provided, annotate what we can, skipping hets and homs
-	    if len(header) > firstSampleIdx {
-	      if len(homs[i]) == 0 && len(hets[i]) == 0 {
-	        continue
-	      }
-	    }
+    for i, alt := range altAlleles {
+      // If no sampels are provided, annotate what we can, skipping hets and homs
+      if len(header) > firstSampleIdx {
+        if len(homs[i]) == 0 && len(hets[i]) == 0 {
+          continue
+        }
+      }
 
-	    var output bytes.Buffer
-	    output.WriteString(record[chromIdx])
-	    output.WriteString("\t")
-	    output.WriteString(record[posIdx])
-	    output.WriteString("\t")
+      var output bytes.Buffer
+      output.WriteString(record[chromIdx])
+      output.WriteString("\t")
+      output.WriteString(record[posIdx])
+      output.WriteString("\t")
 
       if len(altAlleles) > 1 {
         output.WriteString("MULTIALLELIC")
@@ -188,11 +188,11 @@ func processLine(header []string, emptyField string, fieldDelimiter string, minG
         output.WriteString(record[typeIdx])
       }
 
-	    output.WriteString("\t")
-	    output.WriteString(record[refIdx])
-	    output.WriteString("\t")
-	    output.WriteString(alt)
-	    output.WriteString("\t")
+      output.WriteString("\t")
+      output.WriteString(record[refIdx])
+      output.WriteString("\t")
+      output.WriteString(alt)
+      output.WriteString("\t")
 
       if(len(altAlleles) > 1) {
         output.WriteString(parse.NotTrTv)
@@ -202,36 +202,36 @@ func processLine(header []string, emptyField string, fieldDelimiter string, minG
 
       output.WriteString("\t")
 
-	    if len(hets) == 0 || len(hets[i]) == 0 {
-	      output.WriteString(emptyField)
-	    } else {
-	      output.WriteString(strings.Join(hets[i], fieldDelimiter))
-	    }
+      if len(hets) == 0 || len(hets[i]) == 0 {
+        output.WriteString(emptyField)
+      } else {
+        output.WriteString(strings.Join(hets[i], fieldDelimiter))
+      }
 
-	    output.WriteString("\t")
+      output.WriteString("\t")
 
-	    if len(homs) == 0 || len(homs[i]) == 0 {
-	      output.WriteString(emptyField)
-	    } else {
-	      output.WriteString(strings.Join(homs[i], fieldDelimiter))
-	    }
+      if len(homs) == 0 || len(homs[i]) == 0 {
+        output.WriteString(emptyField)
+      } else {
+        output.WriteString(strings.Join(homs[i], fieldDelimiter))
+      }
 
-	    output.WriteString("\t")
+      output.WriteString("\t")
 
-	    if len(missing) == 0 || len(missing[i]) == 0 {
-	      output.WriteString(emptyField)
-	    } else {
-	      output.WriteString(strings.Join(missing[i], fieldDelimiter))
-	    }
+      if len(missing) == 0 || len(missing[i]) == 0 {
+        output.WriteString(emptyField)
+      } else {
+        output.WriteString(strings.Join(missing[i], fieldDelimiter))
+      }
 
-	    output.WriteString("\n")
-	    results <- output.String()
-	  }
-	}
+      output.WriteString("\n")
+      results <- output.String()
+    }
+  }
 
-	// log.Println("Worker hit, missed this many times: ", hitCount, missCount)
-	// Let the main process know we're done.
-	complete <- true
+  // log.Println("Worker hit, missed this many times: ", hitCount, missCount)
+  // Let the main process know we're done.
+  complete <- true
 }
 
 // Explicitly whitelist call types, because this gets stored, could be malicious
