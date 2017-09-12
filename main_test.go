@@ -333,6 +333,11 @@ func TestProcessBiAllelicLineWithGenotypingError(t *testing.T) {
     // A is A/A so A homozygote 2 alleles
     // T is T/T so the other homozygote
     // So I think 1/3 missingness (1 genotype, 3 samples)
+    if record[10] != "Sample1" {
+      t.Error(`Expect Sample1 to be missing across all allele, because miscalled relative to Alleles,
+        and because missingGenos should be same for all variants in multiallelic`, record)
+    }
+
     if record[11] != strconv.FormatFloat(float64(1)/float64(3), 'G', 6, 64) {
       t.Error("Expected 1/3 missingness for both alleles in multiallelic and genotypes K,A,T", record)
     }
@@ -362,10 +367,6 @@ func TestProcessBiAllelicLineWithGenotypingError(t *testing.T) {
       // So I think 1/2 (1 AA out of 2 correctly typed samples)
       if record[9] != strconv.FormatFloat(float64(1)/float64(2), 'G', 6, 64) {
         t.Error("Expected 1/2 homozygosity for allele A and genotypes K,A,T", record)
-      }
-
-      if record[10] != "Sample1" {
-        t.Error("Expect Sample1 to be missing for first allele, because miscalled relative to Alleles", record)
       }
 
       //allele frequency for A allele
@@ -404,10 +405,6 @@ func TestProcessBiAllelicLineWithGenotypingError(t *testing.T) {
       // So I think 1/2 (1 AA out of 2 correctly typed samples)
       if record[9] != strconv.FormatFloat(float64(1)/float64(2), 'G', 6, 64) {
         t.Error("Expected 1/2 homozygosity for allele T and genotypes K,A,T", record)
-      }
-
-      if record[10] != "Sample1" {
-        t.Error("Expect Sample1 to be missing for first allele, because miscalled relative to Alleles", record)
       }
 
       //allele frequency for A allele
@@ -457,6 +454,12 @@ func TestProcessBiAllelicLineWithLowCoverageError(t *testing.T) {
     // A is A/A so A homozygote 2 alleles
     // T is missing because its GQ < minGq
     // So I think 2/3 missingness (1 genotype, 3 samples)
+    if record[10] != "SampleA;SampleB" {
+      t.Error(`Expect Sample1 and Sample3 to be missing for first allele, because
+        Samples 1 miscalled relative to Alleles, and Sample3 lower than requested .95 confidence,
+        and missingGenos should be same across all alleles in multiallelic`, record)
+    }
+
     if record[11] != strconv.FormatFloat(float64(2)/float64(3), 'G', 6, 64) {
       t.Error("Expected 2/3 missingness for both alleles in multiallelic and genotypes K,A,T with .9 T", record)
     }
@@ -487,11 +490,6 @@ func TestProcessBiAllelicLineWithLowCoverageError(t *testing.T) {
       // So I think 1/2 (1 AA out of 2 correctly typed samples)
       if record[9] != "1" {
         t.Error("Expected 1 homozygosity for allele A and genotypes K,A,T, with K being genotyping error, and T < .95 minGq", record)
-      }
-
-      if record[10] != "SampleA;SampleB" {
-        t.Error(`Expect Sample1 and Sample3 to be missing for first allele, because
-          Samples 1 miscalled relative to Alleles, and Sample3 lower than requested .95 confidence`, record)
       }
 
       //allele frequency for A allele
@@ -545,7 +543,7 @@ func TestProcessMultiallelicLine(t *testing.T) {
 
     // same samples should be missing across all alleles in multiallelic
     if record[10] != "Sample7;Sample8;Sample9;Sample11" {
-      t.Error("Expect Sample7;Sample8;Sample9;Sample11 missing on all lines", record)
+      t.Error("Expect Sample7;Sample8;Sample9;Sample11 missing for all alleles in a single multiallelic", record)
     }
 
     //missingness is shared across all alleles

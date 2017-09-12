@@ -146,7 +146,8 @@ func readSnp(config *Config, reader *bufio.Reader, resultFunc func(row string)) 
   wg.Wait()
 }
 
-func processLine(header []string, emptyField string, fieldDelimiter string, minGq float64, queue chan string, results chan string, complete chan bool) {
+func processLine(header []string, emptyField string, fieldDelimiter string, minGq float64,
+queue chan string, results chan string, complete chan bool) {
   alleleCache := make(map[byte]map[string][]string)
   var altAlleles []string
 
@@ -181,13 +182,6 @@ func processLine(header []string, emptyField string, fieldDelimiter string, minG
 
     if numSamples > 0 {
       homs, hets, missing  = makeHetHomozygotes(record, header, altAlleles, minGq)
-
-      // Predicated on all alleles being given identical missing entries
-      if len(missing) > 0 && len(missing[0]) > 0 {
-        effectiveSamples = numSamples - float64(len(missing[0]))
-      } else {
-        effectiveSamples = numSamples
-      }
     }
 
     for i, alt := range altAlleles {
@@ -197,6 +191,17 @@ func processLine(header []string, emptyField string, fieldDelimiter string, minG
         // this site has no samples at all with the minor allele, so skip it
         if len(hets[i]) == 0 && len(homs[i]) == 0 {
           continue;
+        }
+
+        // Missing values should all be the same; currently makeHetHomozygotes
+        // provides array of N (equal) missingngess arrays for convenience, one for each alt
+        // to match the use of hets and homs
+        // This use will incur minor hit for multiallelics, but leaves open
+        // possibility that missing[0] != missing[1] at some point in future
+        if len(missing) > 0 && len(missing[i]) > 0 {
+          effectiveSamples = numSamples - float64(len(missing[i]))
+        } else {
+          effectiveSamples = numSamples
         }
       }
 
@@ -262,6 +267,9 @@ func processLine(header []string, emptyField string, fieldDelimiter string, minG
 
       output.WriteString("\t")
 
+      // Missing values should all be the same; currently makeHetHomozygotes
+      // provides array of N (equal) missingngess arrays for convenience, one for each alt
+      // to match the use of hets and homs
       if len(missing) == 0 || len(missing[i]) == 0 {
         output.WriteString(emptyField)
         output.WriteString("\t")
@@ -342,6 +350,9 @@ func gatherAlt(ref byte, alleles string, alt map[byte]map[string][]string) []str
   return alt[ref][alleles]
 }
 
+// TODO: Right now we define missing to always be the same across all alleles in a multiallelic
+// since such sites are necessarily ambiguous, we can't assign them to a particular allele
+// However, this funciton defines missing to be 2D array; we can optimize this away
 func makeHetHomozygotes(fields []string, header []string, altAlleles []string, minGQ float64) ([][]string, [][]string, [][]string) {
   missing := make([][]string, len(altAlleles), len(altAlleles))
   het := make([][]string, len(altAlleles), len(altAlleles))
