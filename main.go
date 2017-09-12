@@ -74,6 +74,7 @@ func main() {
 
   reader := bufio.NewReader(inFh)
 
+  fmt.Println(strings.Join(parse.Header, "\t"))
   readSnp(config, reader, func(row string) {fmt.Print(row)})
 }
 
@@ -149,6 +150,24 @@ func processLine(header []string, emptyField string, fieldDelimiter string, minG
   alleleCache := make(map[byte]map[string][]string)
   var altAlleles []string
 
+  var homs [][]string
+  var hets [][]string
+  var missing [][]string
+  var effectiveSamples float64
+
+  var numSamples float64
+
+  //"Header is not even, last genotype placeholder was chopped, adding back 1 field"
+  if (len(header) - firstSampleIdx) % 2 != 0 {
+    numSamples = float64(len(header) + 1 - firstSampleIdx) / 2
+  } else {
+    numSamples = float64(len(header) - firstSampleIdx) / 2
+  }
+
+  if numSamples != float64(int64(numSamples)) {
+    log.Printf("Warning: calculated # samples is %f, but expected to be integer", numSamples)
+  }
+
   for line := range queue {
     record := strings.Split(line, "\t")
 
@@ -156,23 +175,28 @@ func processLine(header []string, emptyField string, fieldDelimiter string, minG
       continue
     }
 
-    var homs [][]string
-    var hets [][]string
-    var missing [][]string
-
     // Hit rate for this is quite high; runs only 12 times for all SNPs
     // and N times for indels, multiallelics, but those are rare, and do repeat
     altAlleles = gatherAlt(record[refIdx][0], record[altIdx], alleleCache)
 
-    if len(header) > firstSampleIdx {
-      homs, hets, missing = makeHetHomozygotes(record, header, altAlleles, minGq)
+    if numSamples > 0 {
+      homs, hets, missing  = makeHetHomozygotes(record, header, altAlleles, minGq)
+
+      // Predicated on all alleles being given identical missing entries
+      if len(missing) > 0 && len(missing[0]) > 0 {
+        effectiveSamples = numSamples - float64(len(missing[0]))
+      } else {
+        effectiveSamples = numSamples
+      }
     }
 
     for i, alt := range altAlleles {
-      // If no sampels are provided, annotate what we can, skipping hets and homs
-      if len(header) > firstSampleIdx {
-        if len(homs[i]) == 0 && len(hets[i]) == 0 {
-          continue
+      // If no samples are provided, annotate what we can, skipping hets and homs
+      // If we have samples, but no non-missing found at this site, skip the site
+      if numSamples > 0 {
+        // this site has no samples at all with the minor allele, so skip it
+        if len(hets[i]) == 0 && len(homs[i]) == 0 {
+          continue;
         }
       }
 
@@ -204,24 +228,79 @@ func processLine(header []string, emptyField string, fieldDelimiter string, minG
 
       if len(hets) == 0 || len(hets[i]) == 0 {
         output.WriteString(emptyField)
+        output.WriteString("\t")
+        output.WriteString("0")
       } else {
         output.WriteString(strings.Join(hets[i], fieldDelimiter))
+        output.WriteString("\t")
+
+        // This gives plenty precision; we are mostly interested in
+        // the first or maybe 2-3 significant digits
+        // https://play.golang.org/p/Ux-QmClaJG
+        // Also, gnomAD seems to use 6 bits of precision
+        // the bitSize == 64 allows us to round properly past 6 s.f
+        // Note: 'G' requires these numbers to be < 0 for proper precision
+        // (elase only 6 s.f total, rather than after decimal)
+
+        // heterozygosity is relative to the number of complete samples
+        output.WriteString(strconv.FormatFloat(float64(len(hets[i])) / effectiveSamples, 'G', 6, 64))
       }
 
       output.WriteString("\t")
 
       if len(homs) == 0 || len(homs[i]) == 0 {
         output.WriteString(emptyField)
+        output.WriteString("\t")
+        output.WriteString("0")
       } else {
         output.WriteString(strings.Join(homs[i], fieldDelimiter))
+        output.WriteString("\t")
+
+        // homozygosity is relative to the number of complete samples
+        output.WriteString(strconv.FormatFloat(float64(len(homs[i])) / effectiveSamples, 'G', 6, 64))
       }
 
       output.WriteString("\t")
 
       if len(missing) == 0 || len(missing[i]) == 0 {
         output.WriteString(emptyField)
+        output.WriteString("\t")
+        output.WriteString("0")
       } else {
         output.WriteString(strings.Join(missing[i], fieldDelimiter))
+        output.WriteString("\t")
+
+        // missingness is relative to the total number of samples
+        output.WriteString(strconv.FormatFloat(float64(len(missing[i])) / numSamples, 'G', 6, 64))
+      }
+
+      // Write the sample minor allele frequency
+      // This can be 0 in one of wo situations
+      // First, if we have only missing genotypes at this site
+      // However, in this case, we don't reach this code, because of line
+      // 302 (if len(homs) == 0 && len(hets) == 0)
+      // Else if there are truly no minor allele
+      output.WriteString("\t")
+
+      //For sites without samples
+      if effectiveSamples == 0 {
+        output.WriteString("0")
+      } else {
+        // sampleMaf numerator is just 2x the number of homozygotes + number of heterozygotes
+        // because .snp files list haploids exactly the same as homozygous diploids
+        // sampleMaf denominator is typically (len(fields) - len(missing))*2 - 6
+        // where 6 is the number of fields before the first sample field (or equivalently
+        // it's the first sample field index)
+        // Note that len(fields) - 6 contains 2x as many fields as samples, with every other
+        // being a genotype
+        // This nicely matches our expectation for the number of alleles per sample
+        // allowing us to just subtract len(missing) * 2
+        // Also note that we use len(fields) not len(header)
+        // Depending on the reader implementation, header may contain 1 fewer than the expected
+        // number of fields, because the last character is an empty string, followed by a "\n"
+        // So, for instance, Perl's chomp will remove not only the "\n", but also rewind the record
+        // the field on the left side of the preceeding "\t"
+        output.WriteString(strconv.FormatFloat(float64( len(homs[i]) * 2 + len(hets[i]) ) / (effectiveSamples * 2), 'G', 6, 64))
       }
 
       output.WriteString("\n")
