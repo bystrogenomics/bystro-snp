@@ -201,7 +201,7 @@ func TestProcessBiAllelicLine(t *testing.T) {
       // A is A/A so A homozygote 2 alleles
       // T is T/T so the other homozygote
       // So I think 1/3
-      if record[7] != strconv.FormatFloat(float64(1)/float64(3), 'G', 6, 64) {
+      if record[7] != strconv.FormatFloat(float64(1)/float64(3), 'G', 4, 64) {
         t.Error("Expected 1/3 heterozygosity for allele A and genotypes W,A,T", record)
       }
 
@@ -214,7 +214,7 @@ func TestProcessBiAllelicLine(t *testing.T) {
       // A is A/A so A homozygote 2 alleles
       // T is T/T so the other homozygote
       // So I think 1/3 for the A allele
-      if record[9] != strconv.FormatFloat(float64(1)/float64(3), 'G', 6, 64) {
+      if record[9] != strconv.FormatFloat(float64(1)/float64(3), 'G', 4, 64) {
         t.Error("Expected 1/3 homozygosity for allele A and genotypes W,A,T", record)
       }
 
@@ -238,7 +238,7 @@ func TestProcessBiAllelicLine(t *testing.T) {
       // A is A/A so A homozygote 2 alleles
       // T is T/T so the other homozygote
       // So I think 3/6 allele frequency
-      if record[12] != strconv.FormatFloat(float64(3)/float64(6), 'G', 6, 64) {
+      if record[12] != strconv.FormatFloat(float64(3)/float64(6), 'G', 4, 64) {
         t.Error("Expected 3/6 sampleMaf for allele A and genotypes W,A,T", record)
       }
     }
@@ -257,7 +257,7 @@ func TestProcessBiAllelicLine(t *testing.T) {
       // A is A/A so A homozygote 2 alleles
       // T is T/T so the other homozygote
       // So I think 1/3
-      if record[7] != strconv.FormatFloat(float64(1)/float64(3), 'G', 6, 64) {
+      if record[7] != strconv.FormatFloat(float64(1)/float64(3), 'G', 4, 64) {
         t.Error("Expect 1/3 heterozygosity for allele T and genotypes W,A,T", record)
       }
 
@@ -270,7 +270,7 @@ func TestProcessBiAllelicLine(t *testing.T) {
       // A is A/A so A homozygote 2 alleles
       // T is T/T so the other homozygote
       // So I think 1/3
-      if record[9] != strconv.FormatFloat(float64(1)/float64(3), 'G', 6, 64) {
+      if record[9] != strconv.FormatFloat(float64(1)/float64(3), 'G', 4, 64) {
         t.Error("Expect 1/3 homozygosity for allele T and genotypes W,A,T", record)
       }
 
@@ -292,7 +292,7 @@ func TestProcessBiAllelicLine(t *testing.T) {
       // A is A/A so A homozygote 2 alleles
       // T is T/T so the other homozygote
       // So I think 3/6
-      if record[12] != strconv.FormatFloat(float64(3)/float64(6), 'G', 6, 64) {
+      if record[12] != strconv.FormatFloat(float64(3)/float64(6), 'G', 4, 64) {
         t.Error("Expected 3/6 sampleMaf for allele T and genotypes W,A,T", record)
       }
     }
@@ -338,7 +338,7 @@ func TestProcessBiAllelicLineWithGenotypingError(t *testing.T) {
         and because missingGenos should be same for all variants in multiallelic`, record)
     }
 
-    if record[11] != strconv.FormatFloat(float64(1)/float64(3), 'G', 6, 64) {
+    if record[11] != strconv.FormatFloat(float64(1)/float64(3), 'G', 4, 64) {
       t.Error("Expected 1/3 missingness for both alleles in multiallelic and genotypes K,A,T", record)
     }
 
@@ -365,7 +365,7 @@ func TestProcessBiAllelicLineWithGenotypingError(t *testing.T) {
       // A is A/A so A homozygote 2 alleles
       // T is T/T so the other homozygote
       // So I think 1/2 (1 AA out of 2 correctly typed samples)
-      if record[9] != strconv.FormatFloat(float64(1)/float64(2), 'G', 6, 64) {
+      if record[9] != strconv.FormatFloat(float64(1)/float64(2), 'G', 4, 64) {
         t.Error("Expected 1/2 homozygosity for allele A and genotypes K,A,T", record)
       }
 
@@ -375,7 +375,7 @@ func TestProcessBiAllelicLineWithGenotypingError(t *testing.T) {
       // A is A/A so A homozygote 2 alleles
       // T is T/T so the other homozygote
       // So I think 2/4 (both K alleles excluded from consideration)
-      if record[12] != strconv.FormatFloat(float64(2)/float64(4), 'G', 6, 64) {
+      if record[12] != strconv.FormatFloat(float64(2)/float64(4), 'G', 4, 64) {
         t.Error("Expected 2/4 sampleMaf for allele T and genotypes K,A,T", record)
       }
     }
@@ -403,7 +403,7 @@ func TestProcessBiAllelicLineWithGenotypingError(t *testing.T) {
       // A is A/A so A homozygote 2 alleles
       // T is T/T so the other homozygote
       // So I think 1/2 (1 AA out of 2 correctly typed samples)
-      if record[9] != strconv.FormatFloat(float64(1)/float64(2), 'G', 6, 64) {
+      if record[9] != strconv.FormatFloat(float64(1)/float64(2), 'G', 4, 64) {
         t.Error("Expected 1/2 homozygosity for allele T and genotypes K,A,T", record)
       }
 
@@ -413,7 +413,7 @@ func TestProcessBiAllelicLineWithGenotypingError(t *testing.T) {
       // A is A/A so A homozygote 2 alleles
       // T is T/T so the other homozygote
       // So I think 2/4 (2 T alleles from genotype TT / 4 correctly typed alleles)
-      if record[12] != strconv.FormatFloat(float64(2)/float64(4), 'G', 6, 64) {
+      if record[12] != strconv.FormatFloat(float64(2)/float64(4), 'G', 4, 64) {
         t.Error("Expected 2/4 sampleMaf for allele T and genotypes K,A,T", record)
       }
     }
@@ -460,7 +460,7 @@ func TestProcessBiAllelicLineWithLowCoverageError(t *testing.T) {
         and missingGenos should be same across all alleles in multiallelic`, record)
     }
 
-    if record[11] != strconv.FormatFloat(float64(2)/float64(3), 'G', 6, 64) {
+    if record[11] != strconv.FormatFloat(float64(2)/float64(3), 'G', 4, 64) {
       t.Error("Expected 2/3 missingness for both alleles in multiallelic and genotypes K,A,T with .9 T", record)
     }
 
@@ -552,7 +552,7 @@ func TestProcessMultiallelicLine(t *testing.T) {
     // T is < .95
     // Y < .95
     // so 4/11 samples are missing
-    if record[11] != strconv.FormatFloat(float64(4)/float64(11), 'G', 6, 64) {
+    if record[11] != strconv.FormatFloat(float64(4)/float64(11), 'G', 4, 64) {
       t.Error("Expected 4/11 missingness", record)
     }
 
@@ -581,7 +581,7 @@ func TestProcessMultiallelicLine(t *testing.T) {
       // T is < .95
       // Y < .95
       // so 1/(11-4 == 7) samples are het
-      if record[7] != strconv.FormatFloat(float64(1)/float64(7), 'G', 6, 64) {
+      if record[7] != strconv.FormatFloat(float64(1)/float64(7), 'G', 4, 64) {
         t.Error("Expected 1/7 heterozygosity for T", record)
       }
 
@@ -597,7 +597,7 @@ func TestProcessMultiallelicLine(t *testing.T) {
       // T is < .95
       // Y < .95
       // so 1/(11-4 == 7) samples are het
-      if record[9] != strconv.FormatFloat(float64(1)/float64(7), 'G', 6, 64) {
+      if record[9] != strconv.FormatFloat(float64(1)/float64(7), 'G', 4, 64) {
         t.Error("Expected 1/7 homozygosity for T", record)
       }
 
@@ -609,7 +609,7 @@ func TestProcessMultiallelicLine(t *testing.T) {
       // T is < .95
       // Y < .95
       // so 3/(11-4 == 7) * 1/2 == 3/14 samples are het
-      if record[12] != strconv.FormatFloat(float64(3)/float64(14), 'G', 6, 64) {
+      if record[12] != strconv.FormatFloat(float64(3)/float64(14), 'G', 4, 64) {
         t.Error("Expected 3/14 sampleMaf for T", record)
       }
     }
@@ -632,7 +632,7 @@ func TestProcessMultiallelicLine(t *testing.T) {
       // T is < .95
       // Y < .95
       // so 1/(11-4 == 7) samples are het
-      if record[7] != strconv.FormatFloat(float64(1)/float64(7), 'G', 6, 64) {
+      if record[7] != strconv.FormatFloat(float64(1)/float64(7), 'G', 4, 64) {
         t.Error("Expected 1/7 heterozygosity for +AATC", record)
       }
 
@@ -648,7 +648,7 @@ func TestProcessMultiallelicLine(t *testing.T) {
       // T is < .95
       // Y < .95
       // so 1/(11-4 == 7) samples are het
-      if record[9] != strconv.FormatFloat(float64(1)/float64(7), 'G', 6, 64) {
+      if record[9] != strconv.FormatFloat(float64(1)/float64(7), 'G', 4, 64) {
         t.Error("Expected 1/7 homozygosity for +AATC", record)
       }
 
@@ -660,7 +660,7 @@ func TestProcessMultiallelicLine(t *testing.T) {
       // T is < .95
       // Y < .95
       // so 3/(11-4 == 7) * 1/2 == 3/14 samples are het
-      if record[12] != strconv.FormatFloat(float64(3)/float64(14), 'G', 6, 64) {
+      if record[12] != strconv.FormatFloat(float64(3)/float64(14), 'G', 4, 64) {
         t.Error("Expected 3/14 sampleMaf for +AATC", record)
       }
     }
@@ -683,7 +683,7 @@ func TestProcessMultiallelicLine(t *testing.T) {
       // T is < .95
       // Y < .95
       // so 1/(11-4 == 7) samples are het
-      if record[7] != strconv.FormatFloat(float64(1)/float64(7), 'G', 6, 64) {
+      if record[7] != strconv.FormatFloat(float64(1)/float64(7), 'G', 4, 64) {
         t.Error("Expected 1/7 heterozygosity for -9", record)
       }
 
@@ -699,7 +699,7 @@ func TestProcessMultiallelicLine(t *testing.T) {
       // T is < .95
       // Y < .95
       // so 1/(11-4 == 7) samples are het
-      if record[9] != strconv.FormatFloat(float64(1)/float64(7), 'G', 6, 64) {
+      if record[9] != strconv.FormatFloat(float64(1)/float64(7), 'G', 4, 64) {
         t.Error("Expected 1/7 homozygosity for -9", record)
       }
 
@@ -711,7 +711,7 @@ func TestProcessMultiallelicLine(t *testing.T) {
       // T is < .95
       // Y < .95
       // so 3/(11-4 == 7) * 1/2 == 3/14 samples are het
-      if record[12] != strconv.FormatFloat(float64(3)/float64(14), 'G', 6, 64) {
+      if record[12] != strconv.FormatFloat(float64(3)/float64(14), 'G', 4, 64) {
         t.Error("Expected 3/14 sampleMaf for -9", record)
       }
     }
@@ -773,7 +773,7 @@ func TestProcessSingleLine(t *testing.T) {
     // Sample8  is K == G/T so genotyping error (G not in Alleles)
     // Sample 9 is Y, which is fine, but < .95 minGq so missing
     // so 2/(12-5 == 7) samples are het
-    if record[7] != strconv.FormatFloat(float64(2)/float64(7), 'G', 6, 64) {
+    if record[7] != strconv.FormatFloat(float64(2)/float64(7), 'G', 4, 64) {
       t.Error("Expected 2/7 heterozygosity for T", record)
     }
 
@@ -790,7 +790,7 @@ func TestProcessSingleLine(t *testing.T) {
     // Sample8  is K == G/T so genotyping error (G not in Alleles)
     // Sample 9 is Y, which is fine, but < .95 minGq so missing
     // so 1/(12-5 == 7) samples are het
-    if record[9] != strconv.FormatFloat(float64(1)/float64(7), 'G', 6, 64) {
+    if record[9] != strconv.FormatFloat(float64(1)/float64(7), 'G', 4, 64) {
       t.Error("Expected 2/7 homozygosity for T", record)
     }
 
@@ -806,7 +806,7 @@ func TestProcessSingleLine(t *testing.T) {
     // Sample8  is K == G/T so genotyping error (G not in Alleles)
     // Sample 9 is Y, which is fine, but < .95 minGq so missing
     // so 5/12 samples are missing
-    if record[11] != strconv.FormatFloat(float64(5)/float64(12), 'G', 6, 64) {
+    if record[11] != strconv.FormatFloat(float64(5)/float64(12), 'G', 4, 64) {
       t.Error("Expected 5/12 missingness", record)
     }
 
@@ -819,7 +819,7 @@ func TestProcessSingleLine(t *testing.T) {
     // Sample8  is K == G/T so genotyping error (G not in Alleles)
     // Sample 9 is Y, which is fine, but < .95 minGq so missing
     // so 4/(12-5 == 7) * 1/2 alleles or 3/14
-    if record[12] != strconv.FormatFloat(float64(4)/float64(14), 'G', 6, 64) {
+    if record[12] != strconv.FormatFloat(float64(4)/float64(14), 'G', 4, 64) {
       t.Error("Expected 4/14 sampleMaf for T", record)
     }
 
@@ -865,7 +865,7 @@ func TestProcessMultiallelicSnpLine(t *testing.T) {
     //missingness is shared across all alleles
     // 3 missing samples, 14 totl
     // so 3/14 samples are missing
-    if record[11] != strconv.FormatFloat(float64(3)/float64(14), 'G', 6, 64) {
+    if record[11] != strconv.FormatFloat(float64(3)/float64(14), 'G', 4, 64) {
       t.Error("Expected 3/14 missingness", record)
     }
 

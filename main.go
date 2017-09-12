@@ -248,7 +248,7 @@ queue chan string, results chan string, complete chan bool) {
         // (elase only 6 s.f total, rather than after decimal)
 
         // heterozygosity is relative to the number of complete samples
-        output.WriteString(strconv.FormatFloat(float64(len(hets[i])) / effectiveSamples, 'G', 6, 64))
+        output.WriteString(strconv.FormatFloat(float64(len(hets[i])) / effectiveSamples, 'G', 4, 64))
       }
 
       output.WriteString("\t")
@@ -262,7 +262,7 @@ queue chan string, results chan string, complete chan bool) {
         output.WriteString("\t")
 
         // homozygosity is relative to the number of complete samples
-        output.WriteString(strconv.FormatFloat(float64(len(homs[i])) / effectiveSamples, 'G', 6, 64))
+        output.WriteString(strconv.FormatFloat(float64(len(homs[i])) / effectiveSamples, 'G', 4, 64))
       }
 
       output.WriteString("\t")
@@ -279,7 +279,7 @@ queue chan string, results chan string, complete chan bool) {
         output.WriteString("\t")
 
         // missingness is relative to the total number of samples
-        output.WriteString(strconv.FormatFloat(float64(len(missing[i])) / numSamples, 'G', 6, 64))
+        output.WriteString(strconv.FormatFloat(float64(len(missing[i])) / numSamples, 'G', 4, 64))
       }
 
       // Write the sample minor allele frequency
@@ -308,7 +308,7 @@ queue chan string, results chan string, complete chan bool) {
         // number of fields, because the last character is an empty string, followed by a "\n"
         // So, for instance, Perl's chomp will remove not only the "\n", but also rewind the record
         // the field on the left side of the preceeding "\t"
-        output.WriteString(strconv.FormatFloat(float64( len(homs[i]) * 2 + len(hets[i]) ) / (effectiveSamples * 2), 'G', 6, 64))
+        output.WriteString(strconv.FormatFloat(float64( len(homs[i]) * 2 + len(hets[i]) ) / (effectiveSamples * 2), 'G', 4, 64))
       }
 
       output.WriteString("\n")
