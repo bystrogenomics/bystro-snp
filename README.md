@@ -80,7 +80,7 @@ Minimum genotype quality to keep (0 - 1)
 <br>
 
 ```shell
---inPath /path/to/uncompressedFile.vcf
+--inPath /path/to/uncompressedFile.snp
 ```
 
 An input file path, to an uncompressed VCF file. Defaults to `stdin`
