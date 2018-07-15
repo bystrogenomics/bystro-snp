@@ -115,7 +115,7 @@ func TestGatherAlt(t *testing.T) {
   alleles = gatherAlt('A', "A,+AAT", altCache)
 
   if alleles[0] != "+AAT" {
-  	t.Error("Expected alt to be +", alleles)
+  	t.Error("Expected alt to be +AAT", alleles)
   }
 
   if altCache['A']["A,+AAT"][0] != "+AAT" {
