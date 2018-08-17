@@ -101,7 +101,7 @@ func main() {
 	if config.outPath != "" {
 		var err error
 
-		outFh, err = os.Open(config.outPath)
+		outFh, err = os.OpenFile(config.outPath, os.O_WRONLY|os.O_CREATE, 0664)
 		if err != nil {
 			log.Fatal(err)
 		}
