@@ -16,14 +16,22 @@ import (
 	"github.com/akotlar/bystro-utils/parse"
 )
 
-const concurrency int = 3
-const chromIdx int = 0
-const posIdx int = 1
-const refIdx int = 2
-const altIdx int = 3
-const altCountIdx int = 4
-const typeIdx int = 5
-const firstSampleIdx int = 6
+const (
+	concurrency int = 3
+	chromIdx int = 0
+	posIdx int = 1
+	refIdx int = 2
+	altIdx int = 3
+	altCountIdx int = 4
+	typeIdx int = 5
+	firstSampleIdx int = 6
+)
+
+const (
+	tabByte = byte('\t')
+	clByte = byte('\n')
+	zeroByte = byte('0')
+)
 
 var fileMutex sync.Mutex
 
@@ -265,9 +273,9 @@ func processLine(header []string, config *Config,
 			}
 
 			output.WriteString(record[chromIdx])
-			output.WriteString("\t")
+			output.WriteByte(tabByte)
 			output.WriteString(record[posIdx])
-			output.WriteString("\t")
+			output.WriteByte(tabByte)
 
 			if len(altAlleles) > 1 {
 				output.WriteString("MULTIALLELIC")
@@ -275,11 +283,11 @@ func processLine(header []string, config *Config,
 				output.WriteString(record[typeIdx])
 			}
 
-			output.WriteString("\t")
+			output.WriteByte(tabByte)
 			output.WriteString(record[refIdx])
-			output.WriteString("\t")
+			output.WriteByte(tabByte)
 			output.WriteString(alt)
-			output.WriteString("\t")
+			output.WriteByte(tabByte)
 
 			if len(altAlleles) > 1 {
 				output.WriteString(parse.NotTrTv)
@@ -287,15 +295,15 @@ func processLine(header []string, config *Config,
 				output.WriteString(parse.GetTrTv(record[refIdx], alt))
 			}
 
-			output.WriteString("\t")
+			output.WriteByte(tabByte)
 
 			if len(hets) == 0 || len(hets[i]) == 0 {
 				output.WriteString(emptyField)
-				output.WriteString("\t")
-				output.WriteString("0")
+				output.WriteByte(tabByte)
+				output.WriteByte(zeroByte)
 			} else {
 				output.WriteString(strings.Join(hets[i], fieldDelimiter))
-				output.WriteString("\t")
+				output.WriteByte(tabByte)
 
 				// This gives plenty precision; we are mostly interested in
 				// the first or maybe 2-3 significant digits
@@ -309,32 +317,32 @@ func processLine(header []string, config *Config,
 				output.WriteString(strconv.FormatFloat(float64(len(hets[i]))/effectiveSamples, 'G', 4, 64))
 			}
 
-			output.WriteString("\t")
+			output.WriteByte(tabByte)
 
 			if len(homs) == 0 || len(homs[i]) == 0 {
 				output.WriteString(emptyField)
-				output.WriteString("\t")
-				output.WriteString("0")
+				output.WriteByte(tabByte)
+				output.WriteByte(zeroByte)
 			} else {
 				output.WriteString(strings.Join(homs[i], fieldDelimiter))
-				output.WriteString("\t")
+				output.WriteByte(tabByte)
 
 				// homozygosity is relative to the number of complete samples
 				output.WriteString(strconv.FormatFloat(float64(len(homs[i]))/effectiveSamples, 'G', 4, 64))
 			}
 
-			output.WriteString("\t")
+			output.WriteByte(tabByte)
 
 			// Missing values should all be the same; currently makeHetHomozygotes
 			// provides array of N (equal) missingngess arrays for convenience, one for each alt
 			// to match the use of hets and homs
 			if len(missing) == 0 || len(missing[i]) == 0 {
 				output.WriteString(emptyField)
-				output.WriteString("\t")
-				output.WriteString("0")
+				output.WriteByte(tabByte)
+				output.WriteByte(zeroByte)
 			} else {
 				output.WriteString(strings.Join(missing[i], fieldDelimiter))
-				output.WriteString("\t")
+				output.WriteByte(tabByte)
 
 				// missingness is relative to the total number of samples
 				output.WriteString(strconv.FormatFloat(float64(len(missing[i]))/numSamples, 'G', 4, 64))
@@ -346,11 +354,11 @@ func processLine(header []string, config *Config,
 			// However, in this case, we don't reach this code, because of line
 			// 302 (if len(homs) == 0 && len(hets) == 0)
 			// Else if there are truly no minor allele
-			output.WriteString("\t")
+			output.WriteByte(tabByte)
 
 			//For sites without samples
 			if effectiveSamples == 0 {
-				output.WriteString("0")
+				output.WriteByte(zeroByte)
 			} else {
 				// sampleMaf numerator is just 2x the number of homozygotes + number of heterozygotes
 				// because .snp files list haploids exactly the same as homozygous diploids
@@ -369,7 +377,7 @@ func processLine(header []string, config *Config,
 				output.WriteString(strconv.FormatFloat(float64(len(homs[i])*2+len(hets[i]))/(effectiveSamples*2), 'G', 4, 64))
 			}
 
-			output.WriteString("\n")
+			output.WriteByte(clByte)
 		}
 	}
 
