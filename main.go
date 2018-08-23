@@ -17,21 +17,24 @@ import (
 )
 
 const (
-	concurrency int = 3
-	chromIdx int = 0
-	posIdx int = 1
-	refIdx int = 2
-	altIdx int = 3
-	altCountIdx int = 4
-	typeIdx int = 5
+	concurrency    int = 3
+	chromIdx       int = 0
+	posIdx         int = 1
+	refIdx         int = 2
+	altIdx         int = 3
+	altCountIdx    int = 4
+	typeIdx        int = 5
 	firstSampleIdx int = 6
 )
 
 const (
-	tabByte = byte('\t')
-	clByte = byte('\n')
+	tabByte  = byte('\t')
+	clByte   = byte('\n')
 	zeroByte = byte('0')
 )
+
+// Round floats to this many digits
+const precision = 3
 
 var fileMutex sync.Mutex
 
@@ -78,6 +81,10 @@ func setup(args []string) *Config {
 
 func init() {
 	log.SetFlags(0)
+}
+
+func stringHeader() string {
+	return strings.Join(parse.Header, string(tabByte))
 }
 
 func main() {
@@ -132,7 +139,7 @@ func main() {
 
 	writer := bufio.NewWriter(outFh)
 
-	fmt.Fprintln(writer, strings.Join(parse.Header, "\t"))
+	fmt.Fprintln(writer, stringHeader())
 
 	readSnp(config, reader, writer)
 
@@ -207,19 +214,17 @@ func processLine(header []string, config *Config,
 	var homs [][]string
 	var hets [][]string
 	var missing [][]string
-	var effectiveSamples float64
 
-	var numSamples float64
+	var numSamples int
+	var effectiveSamples int
 
+	var ac int
+	var an int
 	//"Header is not even, last genotype placeholder was chopped, adding back 1 field"
 	if (len(header)-firstSampleIdx)%2 != 0 {
-		numSamples = float64(len(header)+1-firstSampleIdx) / 2
+		numSamples = (len(header) + 1 - firstSampleIdx) / 2
 	} else {
-		numSamples = float64(len(header)-firstSampleIdx) / 2
-	}
-
-	if numSamples != float64(int64(numSamples)) {
-		log.Printf("Warning: calculated # samples is %f, but expected to be integer", numSamples)
+		numSamples = (len(header) - firstSampleIdx) / 2
 	}
 
 	var output bytes.Buffer
@@ -266,7 +271,7 @@ func processLine(header []string, config *Config,
 				// This use will incur minor hit for multiallelics, but leaves open
 				// possibility that missing[0] != missing[1] at some point in future
 				if len(missing) > 0 && len(missing[i]) > 0 {
-					effectiveSamples = numSamples - float64(len(missing[i]))
+					effectiveSamples = numSamples - len(missing[i])
 				} else {
 					effectiveSamples = numSamples
 				}
@@ -314,7 +319,7 @@ func processLine(header []string, config *Config,
 				// (elase only 6 s.f total, rather than after decimal)
 
 				// heterozygosity is relative to the number of complete samples
-				output.WriteString(strconv.FormatFloat(float64(len(hets[i]))/effectiveSamples, 'G', 4, 64))
+				output.WriteString(strconv.FormatFloat(float64(len(hets[i]))/float64(effectiveSamples), 'G', precision, 64))
 			}
 
 			output.WriteByte(tabByte)
@@ -328,7 +333,7 @@ func processLine(header []string, config *Config,
 				output.WriteByte(tabByte)
 
 				// homozygosity is relative to the number of complete samples
-				output.WriteString(strconv.FormatFloat(float64(len(homs[i]))/effectiveSamples, 'G', 4, 64))
+				output.WriteString(strconv.FormatFloat(float64(len(homs[i]))/float64(effectiveSamples), 'G', precision, 64))
 			}
 
 			output.WriteByte(tabByte)
@@ -345,7 +350,7 @@ func processLine(header []string, config *Config,
 				output.WriteByte(tabByte)
 
 				// missingness is relative to the total number of samples
-				output.WriteString(strconv.FormatFloat(float64(len(missing[i]))/numSamples, 'G', 4, 64))
+				output.WriteString(strconv.FormatFloat(float64(len(missing[i]))/float64(numSamples), 'G', precision, 64))
 			}
 
 			// Write the sample minor allele frequency
@@ -359,7 +364,13 @@ func processLine(header []string, config *Config,
 			//For sites without samples
 			if effectiveSamples == 0 {
 				output.WriteByte(zeroByte)
+				output.WriteByte(tabByte)
+				output.WriteByte(zeroByte)
+				output.WriteByte(tabByte)
+				output.WriteByte(zeroByte)
 			} else {
+				ac = len(homs[i])*2 + len(hets[i])
+				an = effectiveSamples * 2
 				// sampleMaf numerator is just 2x the number of homozygotes + number of heterozygotes
 				// because .snp files list haploids exactly the same as homozygous diploids
 				// sampleMaf denominator is typically (len(fields) - len(missing))*2 - 6
@@ -374,7 +385,11 @@ func processLine(header []string, config *Config,
 				// number of fields, because the last character is an empty string, followed by a "\n"
 				// So, for instance, Perl's chomp will remove not only the "\n", but also rewind the record
 				// the field on the left side of the preceeding "\t"
-				output.WriteString(strconv.FormatFloat(float64(len(homs[i])*2+len(hets[i]))/(effectiveSamples*2), 'G', 4, 64))
+				output.WriteString(strconv.Itoa(ac))
+				output.WriteByte(tabByte)
+				output.WriteString(strconv.Itoa(an))
+				output.WriteByte(tabByte)
+				output.WriteString(strconv.FormatFloat(float64(ac)/float64(an), 'G', precision, 64))
 			}
 
 			output.WriteByte(clByte)
