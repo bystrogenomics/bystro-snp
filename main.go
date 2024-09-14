@@ -13,7 +13,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/akotlar/bystro-utils/parse"
+	"github.com/bystrogenomics/bystro-utils/parse"
 )
 
 const (
